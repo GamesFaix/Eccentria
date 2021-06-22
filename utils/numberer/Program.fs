@@ -163,14 +163,65 @@ let getCardDetailsFromPage (doc: XDocument) : CardDetails =
         Toughness = getValue("toughness")
     }
 
+type ColorGroup =
+    | Colorless = 1
+    | White = 2
+    | Blue = 3
+    | Black = 4
+    | Red = 5
+    | Green = 6
+    | Multi = 7
+    | Hybrid = 8
+    | Artifact = 9
+    | Land = 10
+    | Token = 11
+
+let getColorGroup (card: CardDetails) : ColorGroup = 
+    if card.SuperType.Contains("Token") then ColorGroup.Token
+    elif card.Type = "Land" then ColorGroup.Land
+    else
+        let coloredManaSymbols = 
+            card.ManaCost.GroupBy(fun c -> c) 
+            |> Seq.filter (fun grp -> ['W';'U';'B';'R';'G'] |> Seq.contains grp.Key)
+            |> Seq.toList
+
+        match coloredManaSymbols.Length with
+        | 0 -> if card.Type.Contains("Artifact") then ColorGroup.Artifact else ColorGroup.Colorless
+        | 1 -> match coloredManaSymbols.[0].Key with
+                | 'W' -> ColorGroup.White
+                | 'U' -> ColorGroup.Blue
+                | 'B' -> ColorGroup.Black
+                | 'R' -> ColorGroup.Red
+                | 'G' -> ColorGroup.Green
+                | _ -> failwith "invalid symbol"
+        | _ as n -> if card.ManaCost.Contains("/") then ColorGroup.Hybrid else ColorGroup.Multi
+
+let generateNumbers (cards: CardDetails seq) : (int * CardDetails) seq =
+    cards
+    |> Seq.groupBy getColorGroup
+    |> Seq.sortBy (fun (grp, _) -> grp)
+    |> Seq.collect (fun (_, cs) -> cs |> Seq.sortBy (fun c -> c.Name))
+    |> Seq.indexed
+    |> Seq.map (fun (n, c) -> (n+1, c))
+
 [<EntryPoint>]
 let main argv =
     let setPage = getSetPage(setName).Result
     let cards = getCardListFromSetPage setPage
 
-    let cardPages =
+    let cardDetails =
         cards
-        |> Seq.map (fun (name, id) -> (name, id, getCardEditPage(id).Result |> getCardDetailsFromPage))
+        |> Seq.map (fun (_, id) -> 
+            let cardPage = getCardEditPage(id).Result
+            let card = getCardDetailsFromPage cardPage
+            let card = { card with Id = id }
+            card
+        )
+        |> Seq.toList
+
+    let withNumbers = 
+        generateNumbers cardDetails 
+        |> Seq.map (fun (n, c) -> { c with Number = n.ToString() })
         |> Seq.toList
 
     let xml = setPage.ToString()
