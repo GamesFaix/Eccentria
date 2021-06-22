@@ -25,6 +25,13 @@ let setName = "REP"
 
 let cookie = "remember_web_59ba36addc2b2f9401580f014c7f58ea4e30989d=eyJpdiI6IkZkTVl5dE5ScEJ1Y0xWeUpNZktYckE9PSIsInZhbHVlIjoiXC9FbVdEZWJlRUlHNDhzTmVMZVVCSWxNaWFSbCtNcFV1N0E4UjI4cDF6YkQ1VmtGXC9STFpHYm1raWVFYTF4dERaWTlmQkxSdTc2bU03VDF3c3h1RHlPWDlLOGVCUHBkdFZnWHNMblwvNjFuQXc9IiwibWFjIjoiOTM5ZDhkMTQwY2RlMzQ4M2IyZTM1ZjM1Y2ZlYjI0YjI2NmVhNDg1ZWU5YjI4ZWE0ZmViYmIyZmU3NjkzNWU3YiJ9; XSRF-TOKEN=eyJpdiI6IkNjMzhEcmVsaVpQb3JKR0VDckxcL1Z3PT0iLCJ2YWx1ZSI6IjZGbEQ2cTZtb0NpbE9DWnJxXC9oMlwvT0hOREN3T0g4cHIrVkphWHRSazFxblRvTmFFUkJaM0VoREhhZFNpRkFjZzFEQ29nRVBVN0Q2YU5yd1E0K3Z1Tmc9PSIsIm1hYyI6ImM5ZTc1YTY3YWM3ODJjYmZiMWUzNTkzZGE3NWJiNzcyNjlkYzFjYTIxZWZkZmJmNzM3MWRiYTU1YjFlMjM3ZGQifQ%3D%3D; laravel_session=fbd5eec3495cd3f3de7464700746e7283043afc9"
 
+let cardsToCenter = [
+    "Time Walk"
+    "Demonic Tutor"
+    "Wheel of Fortune"
+    "Jokulhaups"
+]
+
 let getXDoc (url: string) : XDocument Task =
     task {
         use request = new HttpRequestMessage()
@@ -44,7 +51,12 @@ let getXDoc (url: string) : XDocument Task =
         return XDocument.Load(sgmlReader)
     }
 
-let getCardListFromSetPage(doc: XDocument) : (string * string) list =
+type CardInfo = {
+    Id : string
+    Name : string
+}
+
+let getCardListFromSetPage(doc: XDocument) : CardInfo list =
     let listElements = 
         doc.Descendants() 
         |> Seq.filter (fun el -> el.Name.LocalName = "li")
@@ -72,11 +84,12 @@ let getCardListFromSetPage(doc: XDocument) : (string * string) list =
     let cards =
         withLinks
         |> Seq.map (fun (li, p, a) -> 
-            let name = a.Value
             let url = a.Attribute(hrefName).Value
             let m = Regex.Match(url, "https://mtg.design/i/(\w+)/edit")
-            let id = m.Groups.[1].Value
-            (name, id)
+            {
+                Id = m.Groups.[1].Value
+                Name = a.Value
+            }
         )
         |> Seq.toList
 
@@ -204,17 +217,13 @@ let generateNumbers (cards: CardDetails seq) : (int * CardDetails) seq =
     |> Seq.indexed
     |> Seq.map (fun (n, c) -> (n+1, c))
 
-[<EntryPoint>]
-let main argv =
-    let setPage = getSetPage(setName).Result
-    let cards = getCardListFromSetPage setPage
-
+let getUpdatedCardDetails (cardInfos: CardInfo seq) : CardDetails seq =
     let cardDetails =
-        cards
-        |> Seq.map (fun (_, id) -> 
-            let cardPage = getCardEditPage(id).Result
+        cardInfos
+        |> Seq.map (fun c -> 
+            let cardPage = getCardEditPage(c.Id).Result
             let card = getCardDetailsFromPage cardPage
-            let card = { card with Id = id }
+            let card = { card with Id = c.Id }
             card
         )
         |> Seq.toList
@@ -223,6 +232,25 @@ let main argv =
         generateNumbers cardDetails 
         |> Seq.map (fun (n, c) -> { c with Number = n.ToString() })
         |> Seq.toList
+
+    let withCenteringCorrected =
+        withNumbers
+        |> Seq.map (fun c -> 
+            if cardsToCenter |> Seq.contains c.Name 
+            then { c with Center = "true" }
+            else c
+        )
+
+    withCenteringCorrected
+
+[<EntryPoint>]
+let main argv =
+    let setPage = getSetPage(setName).Result
+    let cardInfos = getCardListFromSetPage setPage
+    let cardDetails = getUpdatedCardDetails cardInfos
+
+    // Render https://mtg.design/render?card-number=200&card-total=1&card-set=REP&language=EN&card-title=Windfall&mana-cost=2U&type=Sorcery&text-size=38&rarity=U&artist=No%20artist%20credit&power=1&toughness=1&artwork=https%3A%2F%2Fwww.mtgnexus.com%2Fimg%2Fgallery%2F3623-windfall.jpg%3Fd%3D1591669638&designer=tautologist&card-border=black&watermark=0&card-layout=regular&set-symbol=0&rules-text=Each%20player%20discards%20their%20hand%2C%20then%20draws%20cards%20equal%20to%20the%20greatest%20number%20of%20cards%20a%20player%20discarded%20this%20way.%20&flavor-text=%22To%20fill%20your%20mind%20with%20knowledge%2C%20we%20must%20start%20by%20emptying%20it.%22%0A-Barrin%2C%20master%20wizard%20%20%20%20%20&card-template=U&card-accent=U&stars=0&edit=qnfe61
+    // Save https://mtg.design/shared?edit=qnfe61&name=Windfall
 
     let xml = setPage.ToString()
     Console.WriteLine(xml)
