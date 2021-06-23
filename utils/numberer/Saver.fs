@@ -83,3 +83,22 @@ let saveCards (cards : CardDetails list) (mode : SaverMode) (client: HttpClient)
          
         return ()
     }
+
+let private deleteCard (card: CardDetails) (client: HttpClient) : unit Task =
+    task {
+        printfn "Deleting %s - %s..." card.Set card.Name
+        let url = sprintf "https://mtg.design/set/%s/i/%s/delete" card.Set card.Id
+        let! response = client.GetAsync url
+        if response.StatusCode >= HttpStatusCode.BadRequest then failwith "delete error" else ()        
+        printfn "Deleted %s - %s." card.Set card.Name
+        return ()
+    }
+
+let deleteCards (cards : CardDetails list) (client : HttpClient) : unit Task =
+    task {
+        for c in cards do
+            let! _ = deleteCard c client
+            ()
+
+        return ()
+    }
