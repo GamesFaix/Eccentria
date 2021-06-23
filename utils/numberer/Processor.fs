@@ -10,6 +10,17 @@ let cardsToCenter = [
     "Demonic Tutor"
     "Wheel of Fortune"
     "Jokulhaups"
+    "Bazaar of Baghdad"
+    "Shahrazad"
+    "Buried in Time"
+    "Martyr Drill"
+    "Krark's Thumb"
+    "Krark's Trampoline"
+    "Thirst for Power"
+    "Unnatural Gravity"
+    "Master of None"
+    "Never-Ending Story"
+    "Black Lotus"
 ]
 
 let private getColors (card: CardDetails) : char list =
