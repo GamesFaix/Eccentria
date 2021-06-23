@@ -31,7 +31,7 @@ let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient
         query.Add("artist", card.Artist)
         query.Add("power", card.Power)
         query.Add("toughness", card.Toughness)
-        query.Add("artwork", card.ArtworkUrl)        
+        if not <| String.IsNullOrEmpty(card.ArtworkUrl) then query.Add("artwork", card.ArtworkUrl) else ()  
         query.Add("designer", card.Designer)
         query.Add("card-border", card.Border)
         query.Add("watermark", card.WatermarkUrl)
@@ -44,7 +44,10 @@ let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient
         query.Add("stars", "0") // ???
         query.Add("edit", if mode = SaverMode.Create then "false" else card.Id)
 
-        let url = sprintf "https://mtg.design/render?%s" (query.ToString())
+        let mutable url = sprintf "https://mtg.design/render?%s" (query.ToString())
+        url <- url.Replace("+", "%20")
+                  .Replace("%26rsquo%3b", "%E2%80%99")
+                  .Replace("%26rsquo%253", "%E2%80%99")
 
         let! response = client.GetAsync(url)
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "render error" else ()

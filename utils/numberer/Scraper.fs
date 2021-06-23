@@ -99,8 +99,8 @@ let private getCardDetailsFromPage (doc: XDocument) : CardDetails =
     let getValue(id: string): string = 
         let el = getElementById(doc, id)
         let valueAttr = el.Attribute(XName.op_Implicit("value"))
-        if valueAttr <> null then valueAttr.Value
-        else el.Value
+        if valueAttr <> null then valueAttr.Value.Trim()
+        else el.Value.Trim()
 
     let card = {
         Id = ""
