@@ -1,0 +1,76 @@
+﻿// Modifies cards before saving.
+module Processor
+
+open System
+open System.Net.Http
+open System.Threading.Tasks
+open FSharp.Control.Tasks
+open System.Linq
+open System.Net
+open System.Web
+open Model
+
+let cardsToCenter = [
+    "Time Walk"
+    "Demonic Tutor"
+    "Wheel of Fortune"
+    "Jokulhaups"
+]
+
+let getColors (card: CardDetails) : char list =
+    card.ManaCost.Intersect(['W';'U';'B';'R';'G']) |> Seq.toList
+
+let getColorGroup (card: CardDetails) : ColorGroup = 
+    if card.SuperType.Contains("Token") then ColorGroup.Token
+    elif card.Type = "Land" then ColorGroup.Land
+    else
+        let colors = getColors card
+
+        match colors.Length with
+        | 0 -> if card.Type.Contains("Artifact") then ColorGroup.Artifact else ColorGroup.Colorless
+        | 1 -> match colors.Head with
+                | 'W' -> ColorGroup.White
+                | 'U' -> ColorGroup.Blue
+                | 'B' -> ColorGroup.Black
+                | 'R' -> ColorGroup.Red
+                | 'G' -> ColorGroup.Green
+                | _ -> failwith "invalid symbol"
+        | _ -> if card.ManaCost.Contains("/") then ColorGroup.Hybrid else ColorGroup.Multi
+
+let generateNumbers (cards: CardDetails seq) : (int * CardDetails) seq =
+    cards
+    |> Seq.groupBy getColorGroup
+    |> Seq.sortBy (fun (grp, _) -> grp)
+    |> Seq.collect (fun (_, cs) -> cs |> Seq.sortBy (fun c -> c.Name))
+    |> Seq.indexed
+    |> Seq.map (fun (n, c) -> (n+1, c))
+
+let getCardTemplate (card: CardDetails) : string =
+    let colors = getColors card
+    match colors.Length with
+    | 0 -> "C"
+    | 1 -> colors.Head.ToString()
+    | 2 -> 
+        if not <| card.ManaCost.Contains('/') then "Gld"
+        else String(colors |> Seq.toArray)
+    | _ -> "Gld"   
+
+let processCards (cards : CardDetails list) : CardDetails list =
+    printfn "Generating card numbers..."
+    let withNumbers = 
+        let count = cards.Length
+        generateNumbers cards 
+        |> Seq.map (fun (n, c) -> { c with Number = n.ToString(); Total = count.ToString() })
+        |> Seq.toList
+
+    printfn "Fixing centering bug..."
+    let withCenteringCorrected =
+        withNumbers
+        |> Seq.map (fun c -> 
+            if cardsToCenter |> Seq.contains c.Name 
+            then { c with Center = "true" }
+            else c
+        )
+        |> Seq.toList
+
+    withCenteringCorrected
