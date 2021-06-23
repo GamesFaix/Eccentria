@@ -60,7 +60,11 @@ let processCards (cards : CardDetails list) : CardDetails list =
     let withNumbers = 
         let count = cards.Length
         generateNumbers cards 
-        |> Seq.map (fun (n, c) -> { c with Number = n.ToString(); Total = count.ToString() })
+        |> Seq.map (fun (n, c) -> 
+            { c with 
+                Number = n.ToString().PadLeft(count.ToString().Length); 
+                Total = count.ToString() 
+            })
 
     printfn "Fixing centering bug..."
     let withCenteringCorrected =
