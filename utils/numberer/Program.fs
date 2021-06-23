@@ -256,7 +256,7 @@ let getCardTemplate (card: CardDetails) : string =
     | 2 -> 
         if not <| card.ManaCost.Contains('/') then "Gld"
         else String(colors |> Seq.toArray)
-    | _ -> "Gld"        
+    | _ -> "Gld"   
 
 let renderCard (card: CardDetails) : unit Task =
     task {
@@ -265,24 +265,25 @@ let renderCard (card: CardDetails) : unit Task =
         query.Add("card-total", card.Total)
         query.Add("card-set", card.Set)
         query.Add("language", card.Lang)
-        query.Add("card-title", card.Name |> Uri.EscapeUriString)
+        query.Add("card-title", card.Name)
         query.Add("mana-cost", card.ManaCost)
-        if not <| String.IsNullOrEmpty(card.SuperType) then query.Add("super-type", card.SuperType |> Uri.EscapeUriString) else ()
-        if not <| String.IsNullOrEmpty(card.SubType) then query.Add("sub-type", card.SubType |> Uri.EscapeUriString) else ()
-        query.Add("type", card.Type |> Uri.EscapeUriString)
+        if not <| String.IsNullOrEmpty(card.SuperType) then query.Add("super-type", card.SuperType) else ()
+        if not <| String.IsNullOrEmpty(card.SubType) then query.Add("sub-type", card.SubType) else ()
+        if not <| String.IsNullOrEmpty(card.Center) then query.Add("centered", "true") else ()
+        query.Add("type", card.Type)
         query.Add("text-size", card.TextSize)
         query.Add("rarity", card.Rarity)
-        query.Add("artist", card.Artist |> Uri.EscapeUriString)
+        query.Add("artist", card.Artist)
         query.Add("power", card.Power)
         query.Add("toughness", card.Toughness)
-        query.Add("artwork", card.ArtworkUrl |> Uri.EscapeUriString)        
-        query.Add("designer", card.Designer |> Uri.EscapeUriString)
+        query.Add("artwork", card.ArtworkUrl)        
+        query.Add("designer", card.Designer)
         query.Add("card-border", card.Border)
-        query.Add("watermark", card.WatermarkUrl |> Uri.EscapeUriString)
+        query.Add("watermark", card.WatermarkUrl)
         query.Add("card-layout", card.SpecialFrames)
-        query.Add("set-symbol", card.CustomSetSymbolUrl |> Uri.EscapeUriString)
-        query.Add("rules-text", card.RulesText |> Uri.EscapeUriString)
-        query.Add("flavor-text", card.FlavorText |> Uri.EscapeUriString)
+        query.Add("set-symbol", card.CustomSetSymbolUrl)
+        query.Add("rules-text", card.RulesText)
+        query.Add("flavor-text", card.FlavorText)
         query.Add("card-template", getCardTemplate card)
         query.Add("card-accent", card.LandOverlay)
         query.Add("stars", "0") // ???
