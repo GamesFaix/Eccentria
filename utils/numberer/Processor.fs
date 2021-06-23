@@ -62,7 +62,7 @@ let processCards (cards : CardDetails list) : CardDetails list =
         generateNumbers cards 
         |> Seq.map (fun (n, c) -> 
             { c with 
-                Number = n.ToString().PadLeft(count.ToString().Length); 
+                Number = n.ToString().PadLeft(count.ToString().Length, '0'); 
                 Total = count.ToString() 
             })
 
