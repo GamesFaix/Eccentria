@@ -61,7 +61,6 @@ let processCards (cards : CardDetails list) : CardDetails list =
         let count = cards.Length
         generateNumbers cards 
         |> Seq.map (fun (n, c) -> { c with Number = n.ToString(); Total = count.ToString() })
-        |> Seq.toList
 
     printfn "Fixing centering bug..."
     let withCenteringCorrected =
@@ -71,6 +70,10 @@ let processCards (cards : CardDetails list) : CardDetails list =
             then { c with Center = "true" }
             else c
         )
-        |> Seq.toList
 
-    withCenteringCorrected
+    printfn "Setting templates..."
+    let withTemplates =
+        withCenteringCorrected
+        |> Seq.map (fun c -> { c with Template = getCardTemplate c })
+
+    withTemplates |> Seq.toList

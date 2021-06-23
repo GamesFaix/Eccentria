@@ -28,11 +28,7 @@ let mainTask () : unit Task =
         let cardInfos = getCardListFromSetPage setPage
         let! cardDetails = getCardDetails cardInfos cookie client
         let processed = processCards cardDetails
-
-        for c in processed do
-            let! _ = renderCard c client
-            let! _ = shareCard c client
-            ()
+        let! _ = saveCards processed client
             
         printfn "Done."
 

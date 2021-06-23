@@ -67,3 +67,18 @@ let shareCard (card : CardDetails) (client: HttpClient): unit Task =
         printfn "Shared %s." card.Name
         return ()
     }
+
+let saveCards (cards : CardDetails list) (client: HttpClient) : unit Task =
+    task {
+        let tasks =
+            cards
+            |> List.map (fun c -> 
+                task {
+                    let! _ = renderCard c client
+                    let! _ = shareCard c client
+                    return ()
+                })
+
+        let! _ = Task.WhenAll tasks
+        return ()
+    }
