@@ -8,6 +8,8 @@ open FSharp.Control.Tasks
 open Sgml
 open System.Text.RegularExpressions
 open System.Linq
+open System.Net
+open System.Web
 
 (* 
     mtg.design uses server side rendering, so no API available
@@ -132,6 +134,7 @@ type CardDetails = {
     Power: string
     Toughness: string
     // Extra properties that are conditional based on other choices, like saga frame
+    LandOverlay: string
 }
 
 let getElementById (doc: XDocument, id: string): XElement =
@@ -174,6 +177,7 @@ let getCardDetailsFromPage (doc: XDocument) : CardDetails =
         Artist = getValue("artist")
         Power = getValue("power")
         Toughness = getValue("toughness")
+        LandOverlay = getValue("land-overlay")
     }
 
 type ColorGroup =
@@ -189,25 +193,25 @@ type ColorGroup =
     | Land = 10
     | Token = 11
 
+let getColors (card: CardDetails) : char list =
+    card.ManaCost.Intersect(['W';'U';'B';'R';'G']) |> Seq.toList
+
 let getColorGroup (card: CardDetails) : ColorGroup = 
     if card.SuperType.Contains("Token") then ColorGroup.Token
     elif card.Type = "Land" then ColorGroup.Land
     else
-        let coloredManaSymbols = 
-            card.ManaCost.GroupBy(fun c -> c) 
-            |> Seq.filter (fun grp -> ['W';'U';'B';'R';'G'] |> Seq.contains grp.Key)
-            |> Seq.toList
+        let colors = getColors card
 
-        match coloredManaSymbols.Length with
+        match colors.Length with
         | 0 -> if card.Type.Contains("Artifact") then ColorGroup.Artifact else ColorGroup.Colorless
-        | 1 -> match coloredManaSymbols.[0].Key with
+        | 1 -> match colors.Head with
                 | 'W' -> ColorGroup.White
                 | 'U' -> ColorGroup.Blue
                 | 'B' -> ColorGroup.Black
                 | 'R' -> ColorGroup.Red
                 | 'G' -> ColorGroup.Green
                 | _ -> failwith "invalid symbol"
-        | _ as n -> if card.ManaCost.Contains("/") then ColorGroup.Hybrid else ColorGroup.Multi
+        | _ -> if card.ManaCost.Contains("/") then ColorGroup.Hybrid else ColorGroup.Multi
 
 let generateNumbers (cards: CardDetails seq) : (int * CardDetails) seq =
     cards
@@ -229,8 +233,9 @@ let getUpdatedCardDetails (cardInfos: CardInfo seq) : CardDetails seq =
         |> Seq.toList
 
     let withNumbers = 
+        let count = cardDetails.Length
         generateNumbers cardDetails 
-        |> Seq.map (fun (n, c) -> { c with Number = n.ToString() })
+        |> Seq.map (fun (n, c) -> { c with Number = n.ToString(); Total = count.ToString() })
         |> Seq.toList
 
     let withCenteringCorrected =
@@ -243,14 +248,77 @@ let getUpdatedCardDetails (cardInfos: CardInfo seq) : CardDetails seq =
 
     withCenteringCorrected
 
+let getCardTemplate (card: CardDetails) : string =
+    let colors = getColors card
+    match colors.Length with
+    | 0 -> "C"
+    | 1 -> colors.Head.ToString()
+    | 2 -> 
+        if not <| card.ManaCost.Contains('/') then "Gld"
+        else String(colors |> Seq.toArray)
+    | _ -> "Gld"        
+
+let renderCard (card: CardDetails) : unit Task =
+    task {
+        let query = HttpUtility.ParseQueryString("")
+        query.Add("card-number", card.Number)
+        query.Add("card-total", card.Total)
+        query.Add("card-set", card.Set)
+        query.Add("language", card.Lang)
+        query.Add("card-title", card.Name |> Uri.EscapeUriString)
+        query.Add("mana-cost", card.ManaCost)
+        if not <| String.IsNullOrEmpty(card.SuperType) then query.Add("super-type", card.SuperType |> Uri.EscapeUriString) else ()
+        if not <| String.IsNullOrEmpty(card.SubType) then query.Add("sub-type", card.SubType |> Uri.EscapeUriString) else ()
+        query.Add("type", card.Type |> Uri.EscapeUriString)
+        query.Add("text-size", card.TextSize)
+        query.Add("rarity", card.Rarity)
+        query.Add("artist", card.Artist |> Uri.EscapeUriString)
+        query.Add("power", card.Power)
+        query.Add("toughness", card.Toughness)
+        query.Add("artwork", card.ArtworkUrl |> Uri.EscapeUriString)        
+        query.Add("designer", card.Designer |> Uri.EscapeUriString)
+        query.Add("card-border", card.Border)
+        query.Add("watermark", card.WatermarkUrl |> Uri.EscapeUriString)
+        query.Add("card-layout", card.SpecialFrames)
+        query.Add("set-symbol", card.CustomSetSymbolUrl |> Uri.EscapeUriString)
+        query.Add("rules-text", card.RulesText |> Uri.EscapeUriString)
+        query.Add("flavor-text", card.FlavorText |> Uri.EscapeUriString)
+        query.Add("card-template", getCardTemplate card)
+        query.Add("card-accent", card.LandOverlay)
+        query.Add("stars", "0") // ???
+        query.Add("edit", card.Id)
+
+        let url = sprintf "https://mtg.design/render?%s" (query.ToString())
+
+        let! response = client.GetAsync(url)
+        if response.StatusCode >= HttpStatusCode.BadRequest then failwith "render error" else ()
+
+        return ()
+    }
+
+let shareCard (card : CardDetails) : unit Task =
+    task {
+        let query = HttpUtility.ParseQueryString("")
+        query.Add("edit", card.Id)
+        query.Add("name", card.Name)
+        
+        let url = sprintf "https://mtg.design/shared?%s" (query.ToString())
+
+        let! response = client.GetAsync(url)
+        if response.StatusCode >= HttpStatusCode.BadRequest then failwith "share error" else ()
+        
+        return ()
+    }
+
 [<EntryPoint>]
 let main argv =
     let setPage = getSetPage(setName).Result
     let cardInfos = getCardListFromSetPage setPage
     let cardDetails = getUpdatedCardDetails cardInfos
 
-    // Render https://mtg.design/render?card-number=200&card-total=1&card-set=REP&language=EN&card-title=Windfall&mana-cost=2U&type=Sorcery&text-size=38&rarity=U&artist=No%20artist%20credit&power=1&toughness=1&artwork=https%3A%2F%2Fwww.mtgnexus.com%2Fimg%2Fgallery%2F3623-windfall.jpg%3Fd%3D1591669638&designer=tautologist&card-border=black&watermark=0&card-layout=regular&set-symbol=0&rules-text=Each%20player%20discards%20their%20hand%2C%20then%20draws%20cards%20equal%20to%20the%20greatest%20number%20of%20cards%20a%20player%20discarded%20this%20way.%20&flavor-text=%22To%20fill%20your%20mind%20with%20knowledge%2C%20we%20must%20start%20by%20emptying%20it.%22%0A-Barrin%2C%20master%20wizard%20%20%20%20%20&card-template=U&card-accent=U&stars=0&edit=qnfe61
-    // Save https://mtg.design/shared?edit=qnfe61&name=Windfall
+    for c in cardDetails do
+        (renderCard c).Result
+        (shareCard c).Result
 
     let xml = setPage.ToString()
     Console.WriteLine(xml)
