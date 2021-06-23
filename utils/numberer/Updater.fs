@@ -70,15 +70,11 @@ let shareCard (card : CardDetails) (client: HttpClient): unit Task =
 
 let saveCards (cards : CardDetails list) (client: HttpClient) : unit Task =
     task {
-        let tasks =
-            cards
-            |> List.map (fun c -> 
-                task {
-                    let! _ = renderCard c client
-                    let! _ = shareCard c client
-                    return ()
-                })
-
-        let! _ = Task.WhenAll tasks
+        // Must go in series or the same image gets rendered for each card
+        for c in cards do
+            let! _ = renderCard c client
+            let! _ = shareCard c client
+            ()
+         
         return ()
     }
