@@ -10,6 +10,7 @@
     <Compile Include="Scraper.fs" />
     <Compile Include="Processor.fs" />
     <Compile Include="Saver.fs" />
+    <Compile Include="SetTools.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

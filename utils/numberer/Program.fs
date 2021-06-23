@@ -1,9 +1,5 @@
 ﻿open System
 open System.Net.Http
-open Scraper
-open Processor
-open Saver
-open FSharp.Control.Tasks
 open System.Threading.Tasks
 
 (* 
@@ -18,64 +14,15 @@ open System.Threading.Tasks
 
 let block<'a> (task : 'a Task) : 'a = task.Result
 
-let autonumberSet (client: HttpClient) (cookie: string) (setName: string) : unit Task =
-    task {
-        let! cardDetails = getSetCards setName cookie client
-
-        let processed = processCards cardDetails
-
-        let! _ = saveCards processed SaverMode.Edit client
-            
-        printfn "Done."
-        return ()
-    }
-
-let renameSet (client: HttpClient) (cookie: string) (oldName : string) (newName: string) : unit Task =
-    task {
-        let! cardDetails = getSetCards oldName cookie client
-
-        let processed = processCards cardDetails |> List.map (fun c -> { c with Set = newName })
-        let! _ = saveCards processed SaverMode.Edit client
-        
-        printfn "Done."
-        return ()
-    }
-
-let cloneSet (client: HttpClient) (cookie: string) (oldName : string) (newName: string) : unit Task =
-    task {
-        let! cardDetails = getSetCards oldName cookie client
-
-        let processed = processCards cardDetails |> List.map (fun c -> { c with Set = newName })
-        let! _ = saveCards processed SaverMode.Create client
-        
-        printfn "Done."
-        return ()
-    }
-
-let deleteSet (client: HttpClient) (cookie: string) (setName : string) : unit Task =
-    task {
-        let! cardDetails = getSetCards setName cookie client    
-        let! _ = deleteCards cardDetails client            
-        printfn "Done."
-        return ()
-    }
-
 [<EntryPoint>]
 let main argv =
     
     let client = new HttpClient()    
     let cookie = "remember_web_59ba36addc2b2f9401580f014c7f58ea4e30989d=eyJpdiI6IkZkTVl5dE5ScEJ1Y0xWeUpNZktYckE9PSIsInZhbHVlIjoiXC9FbVdEZWJlRUlHNDhzTmVMZVVCSWxNaWFSbCtNcFV1N0E4UjI4cDF6YkQ1VmtGXC9STFpHYm1raWVFYTF4dERaWTlmQkxSdTc2bU03VDF3c3h1RHlPWDlLOGVCUHBkdFZnWHNMblwvNjFuQXc9IiwibWFjIjoiOTM5ZDhkMTQwY2RlMzQ4M2IyZTM1ZjM1Y2ZlYjI0YjI2NmVhNDg1ZWU5YjI4ZWE0ZmViYmIyZmU3NjkzNWU3YiJ9; XSRF-TOKEN=eyJpdiI6IkNjMzhEcmVsaVpQb3JKR0VDckxcL1Z3PT0iLCJ2YWx1ZSI6IjZGbEQ2cTZtb0NpbE9DWnJxXC9oMlwvT0hOREN3T0g4cHIrVkphWHRSazFxblRvTmFFUkJaM0VoREhhZFNpRkFjZzFEQ29nRVBVN0Q2YU5yd1E0K3Z1Tmc9PSIsIm1hYyI6ImM5ZTc1YTY3YWM3ODJjYmZiMWUzNTkzZGE3NWJiNzcyNjlkYzFjYTIxZWZkZmJmNzM3MWRiYTU1YjFlMjM3ZGQifQ%3D%3D; laravel_session=fbd5eec3495cd3f3de7464700746e7283043afc9"
     
-    //let setName = "J21"
-    //autonumberSet client cookie setName |> block
+    SetTools.deleteSet client cookie "ZZZ" |> block
 
-    let oldSet = "J21"
-    let newSet = "JNK"
-    //renameSet client cookie oldSet newSet |> block
-    autonumberSet client cookie "JNK" |> block
-
-    //let setName = "R21"
-    //deleteSet client cookie setName |> block
+    SetTools.renameSet client cookie "YYY" "MSC" |> block
 
     Console.Read() |> ignore
     0 // return an integer exit code
