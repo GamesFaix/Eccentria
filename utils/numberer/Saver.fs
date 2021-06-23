@@ -40,9 +40,11 @@ let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient
         query.Add("rules-text", card.RulesText)
         query.Add("flavor-text", card.FlavorText)
         query.Add("card-template", card.Template)
-        query.Add("card-accent", card.LandOverlay)
+        query.Add("card-accent", if card.SpecialFrames = "token" then "C" else card.LandOverlay)
+        if card.SpecialFrames = "token" then query.Add("land-overlay", card.LandOverlay) else ()
         query.Add("stars", "0") // ???
         query.Add("edit", if mode = SaverMode.Create then "false" else card.Id)
+        if not <| String.IsNullOrEmpty(card.ColorIndicator) then query.Add("color-indicator", card.ColorIndicator) else ()  
 
         let mutable url = sprintf "https://mtg.design/render?%s" (query.ToString())
         url <- url.Replace("+", "%20")

@@ -16,8 +16,8 @@ let private getColors (card: CardDetails) : char list =
     card.ManaCost.Intersect(['W';'U';'B';'R';'G']) |> Seq.toList
 
 let private getColorGroup (card: CardDetails) : ColorGroup = 
-    if card.SuperType.Contains("Token") then ColorGroup.Token
-    elif card.Type = "Land" then ColorGroup.Land
+    if card.SuperType.ToLower().Contains("token") then ColorGroup.Token
+    elif card.Type.ToLower().Contains("land") then ColorGroup.Land
     else
         let colors = getColors card
 
