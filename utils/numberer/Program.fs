@@ -34,8 +34,9 @@ let cardsToCenter = [
     "Jokulhaups"
 ]
 
-let getXDoc (url: string) : XDocument Task =
+let getXDoc (url: string) : XDocument Task =    
     task {
+        printfn "Getting document from %s..." url
         use request = new HttpRequestMessage()
         request.RequestUri <- Uri(url)
         request.Method <- HttpMethod.Get
@@ -50,7 +51,10 @@ let getXDoc (url: string) : XDocument Task =
         sgmlReader.CaseFolding <- CaseFolding.ToLower
         sgmlReader.InputStream <- new StreamReader(stream)
 
-        return XDocument.Load(sgmlReader)
+        let doc = XDocument.Load(sgmlReader)
+
+        printfn "Loaded document from %s." url
+        return doc
     }
 
 type CardInfo = {
@@ -59,6 +63,8 @@ type CardInfo = {
 }
 
 let getCardListFromSetPage(doc: XDocument) : CardInfo list =
+    printfn "Parsing list of cards from page..."
+
     let listElements = 
         doc.Descendants() 
         |> Seq.filter (fun el -> el.Name.LocalName = "li")
@@ -94,6 +100,10 @@ let getCardListFromSetPage(doc: XDocument) : CardInfo list =
             }
         )
         |> Seq.toList
+
+    printfn "Found %i cards:" cards.Length
+    for c in cards do
+        printfn "\t%s" c.Name
 
     cards
 
@@ -143,13 +153,15 @@ let getElementById (doc: XDocument, id: string): XElement =
     |> Seq.find (fun el -> el.Attribute(XName.op_Implicit("id")).Value = id)
 
 let getCardDetailsFromPage (doc: XDocument) : CardDetails =
+    printfn "Parsing card details..."
+
     let getValue(id: string): string = 
         let el = getElementById(doc, id)
         let valueAttr = el.Attribute(XName.op_Implicit("value"))
         if valueAttr <> null then valueAttr.Value
         else el.Value
 
-    {
+    let card = {
         Id = ""
         Number = getValue("card-number")
         Total = getValue("card-total")
@@ -179,6 +191,9 @@ let getCardDetailsFromPage (doc: XDocument) : CardDetails =
         Toughness = getValue("toughness")
         LandOverlay = getValue("land-overlay")
     }
+
+    printfn "Parsed %s." card.Name
+    card
 
 type ColorGroup =
     | Colorless = 1
@@ -222,6 +237,7 @@ let generateNumbers (cards: CardDetails seq) : (int * CardDetails) seq =
     |> Seq.map (fun (n, c) -> (n+1, c))
 
 let getUpdatedCardDetails (cardInfos: CardInfo seq) : CardDetails seq =
+    printfn "Loading card details..."
     let cardDetails =
         cardInfos
         |> Seq.map (fun c -> 
@@ -232,12 +248,14 @@ let getUpdatedCardDetails (cardInfos: CardInfo seq) : CardDetails seq =
         )
         |> Seq.toList
 
+    printfn "Generating card numbers..."
     let withNumbers = 
         let count = cardDetails.Length
         generateNumbers cardDetails 
         |> Seq.map (fun (n, c) -> { c with Number = n.ToString(); Total = count.ToString() })
         |> Seq.toList
 
+    printfn "Fixing centering bug..."
     let withCenteringCorrected =
         withNumbers
         |> Seq.map (fun c -> 
@@ -260,6 +278,8 @@ let getCardTemplate (card: CardDetails) : string =
 
 let renderCard (card: CardDetails) : unit Task =
     task {
+        printfn "Rendering %s..." card.Name
+
         let query = HttpUtility.ParseQueryString("")
         query.Add("card-number", card.Number)
         query.Add("card-total", card.Total)
@@ -294,11 +314,14 @@ let renderCard (card: CardDetails) : unit Task =
         let! response = client.GetAsync(url)
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "render error" else ()
 
+        printfn "Rendered %s." card.Name
         return ()
     }
 
 let shareCard (card : CardDetails) : unit Task =
     task {
+        printfn "Sharing %s..." card.Name
+
         let query = HttpUtility.ParseQueryString("")
         query.Add("edit", card.Id)
         query.Add("name", card.Name)
@@ -308,6 +331,7 @@ let shareCard (card : CardDetails) : unit Task =
         let! response = client.GetAsync(url)
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "share error" else ()
         
+        printfn "Shared %s." card.Name
         return ()
     }
 
