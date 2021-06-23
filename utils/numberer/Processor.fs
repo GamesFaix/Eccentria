@@ -2,12 +2,7 @@
 module Processor
 
 open System
-open System.Net.Http
-open System.Threading.Tasks
-open FSharp.Control.Tasks
 open System.Linq
-open System.Net
-open System.Web
 open Model
 
 let cardsToCenter = [
@@ -17,10 +12,10 @@ let cardsToCenter = [
     "Jokulhaups"
 ]
 
-let getColors (card: CardDetails) : char list =
+let private getColors (card: CardDetails) : char list =
     card.ManaCost.Intersect(['W';'U';'B';'R';'G']) |> Seq.toList
 
-let getColorGroup (card: CardDetails) : ColorGroup = 
+let private getColorGroup (card: CardDetails) : ColorGroup = 
     if card.SuperType.Contains("Token") then ColorGroup.Token
     elif card.Type = "Land" then ColorGroup.Land
     else
@@ -37,7 +32,7 @@ let getColorGroup (card: CardDetails) : ColorGroup =
                 | _ -> failwith "invalid symbol"
         | _ -> if card.ManaCost.Contains("/") then ColorGroup.Hybrid else ColorGroup.Multi
 
-let generateNumbers (cards: CardDetails seq) : (int * CardDetails) seq =
+let private generateNumbers (cards: CardDetails seq) : (int * CardDetails) seq =
     cards
     |> Seq.groupBy getColorGroup
     |> Seq.sortBy (fun (grp, _) -> grp)
@@ -45,7 +40,7 @@ let generateNumbers (cards: CardDetails seq) : (int * CardDetails) seq =
     |> Seq.indexed
     |> Seq.map (fun (n, c) -> (n+1, c))
 
-let getCardTemplate (card: CardDetails) : string =
+let private getCardTemplate (card: CardDetails) : string =
     let colors = getColors card
     match colors.Length with
     | 0 -> "C"

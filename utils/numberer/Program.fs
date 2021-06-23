@@ -2,7 +2,7 @@
 open System.Net.Http
 open Scraper
 open Processor
-open Updater
+open Saver
 open FSharp.Control.Tasks
 open System.Threading.Tasks
 
@@ -16,27 +16,55 @@ open System.Threading.Tasks
     Make sure to click Center box for select cards becaues it is never set in the form when loading an existing card
 *)
 
-let client = new HttpClient()
+let block<'a> (task : 'a Task) : 'a = task.Result
 
-let setName = "REP"
-
-let cookie = "remember_web_59ba36addc2b2f9401580f014c7f58ea4e30989d=eyJpdiI6IkZkTVl5dE5ScEJ1Y0xWeUpNZktYckE9PSIsInZhbHVlIjoiXC9FbVdEZWJlRUlHNDhzTmVMZVVCSWxNaWFSbCtNcFV1N0E4UjI4cDF6YkQ1VmtGXC9STFpHYm1raWVFYTF4dERaWTlmQkxSdTc2bU03VDF3c3h1RHlPWDlLOGVCUHBkdFZnWHNMblwvNjFuQXc9IiwibWFjIjoiOTM5ZDhkMTQwY2RlMzQ4M2IyZTM1ZjM1Y2ZlYjI0YjI2NmVhNDg1ZWU5YjI4ZWE0ZmViYmIyZmU3NjkzNWU3YiJ9; XSRF-TOKEN=eyJpdiI6IkNjMzhEcmVsaVpQb3JKR0VDckxcL1Z3PT0iLCJ2YWx1ZSI6IjZGbEQ2cTZtb0NpbE9DWnJxXC9oMlwvT0hOREN3T0g4cHIrVkphWHRSazFxblRvTmFFUkJaM0VoREhhZFNpRkFjZzFEQ29nRVBVN0Q2YU5yd1E0K3Z1Tmc9PSIsIm1hYyI6ImM5ZTc1YTY3YWM3ODJjYmZiMWUzNTkzZGE3NWJiNzcyNjlkYzFjYTIxZWZkZmJmNzM3MWRiYTU1YjFlMjM3ZGQifQ%3D%3D; laravel_session=fbd5eec3495cd3f3de7464700746e7283043afc9"
-
-let mainTask () : unit Task =
+let autonumberSet (client: HttpClient) (cookie: string) (setName: string) : unit Task =
     task {
-        let! setPage = getSetPage setName cookie client
-        let cardInfos = getCardListFromSetPage setPage
-        let! cardDetails = getCardDetails cardInfos cookie client
+        let! cardDetails = getSetCards setName cookie client
+
         let processed = processCards cardDetails
-        let! _ = saveCards processed client
+
+        let! _ = saveCards processed SaverMode.Edit client
             
         printfn "Done."
-
         return ()
     }
 
+let renameSet (client: HttpClient) (cookie: string) (oldName : string) (newName: string) : unit Task =
+    task {
+        let! cardDetails = getSetCards oldName cookie client
+
+        let processed = processCards cardDetails |> List.map (fun c -> { c with Set = newName })
+        let! _ = saveCards processed SaverMode.Edit client
+        
+        printfn "Done."
+        return ()
+    }
+
+let cloneSet (client: HttpClient) (cookie: string) (oldName : string) (newName: string) : unit Task =
+    task {
+        let! cardDetails = getSetCards oldName cookie client
+
+        let processed = processCards cardDetails |> List.map (fun c -> { c with Set = newName })
+        let! _ = saveCards processed SaverMode.Create client
+        
+        printfn "Done."
+        return ()
+    }
+
+
 [<EntryPoint>]
 let main argv =
-    mainTask().Result
+    
+    let client = new HttpClient()    
+    let cookie = "remember_web_59ba36addc2b2f9401580f014c7f58ea4e30989d=eyJpdiI6IkZkTVl5dE5ScEJ1Y0xWeUpNZktYckE9PSIsInZhbHVlIjoiXC9FbVdEZWJlRUlHNDhzTmVMZVVCSWxNaWFSbCtNcFV1N0E4UjI4cDF6YkQ1VmtGXC9STFpHYm1raWVFYTF4dERaWTlmQkxSdTc2bU03VDF3c3h1RHlPWDlLOGVCUHBkdFZnWHNMblwvNjFuQXc9IiwibWFjIjoiOTM5ZDhkMTQwY2RlMzQ4M2IyZTM1ZjM1Y2ZlYjI0YjI2NmVhNDg1ZWU5YjI4ZWE0ZmViYmIyZmU3NjkzNWU3YiJ9; XSRF-TOKEN=eyJpdiI6IkNjMzhEcmVsaVpQb3JKR0VDckxcL1Z3PT0iLCJ2YWx1ZSI6IjZGbEQ2cTZtb0NpbE9DWnJxXC9oMlwvT0hOREN3T0g4cHIrVkphWHRSazFxblRvTmFFUkJaM0VoREhhZFNpRkFjZzFEQ29nRVBVN0Q2YU5yd1E0K3Z1Tmc9PSIsIm1hYyI6ImM5ZTc1YTY3YWM3ODJjYmZiMWUzNTkzZGE3NWJiNzcyNjlkYzFjYTIxZWZkZmJmNzM3MWRiYTU1YjFlMjM3ZGQifQ%3D%3D; laravel_session=fbd5eec3495cd3f3de7464700746e7283043afc9"
+    
+    //let setName = "MIS"
+    //autonumberSet client cookie setName |> block
+
+    let oldSet = "MIS"
+    let newSet = "YYY"
+    cloneSet client cookie oldSet newSet |> block
+
     Console.Read() |> ignore
     0 // return an integer exit code

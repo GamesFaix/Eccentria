@@ -12,7 +12,7 @@ open Sgml
 open System.Text.RegularExpressions
 open Model
 
-let getXDoc (url: string) (cookie: string) (client : HttpClient): XDocument Task =    
+let private getXDoc (url: string) (cookie: string) (client : HttpClient): XDocument Task =    
     task {
         printfn "Getting document from %s..." url
         use request = new HttpRequestMessage()
@@ -35,7 +35,7 @@ let getXDoc (url: string) (cookie: string) (client : HttpClient): XDocument Task
         return doc
     }
     
-let getCardListFromSetPage(doc: XDocument) : CardInfo list =
+let private getCardListFromSetPage(doc: XDocument) : CardInfo list =
     printfn "Parsing list of cards from page..."
     
     let listElements = 
@@ -80,20 +80,20 @@ let getCardListFromSetPage(doc: XDocument) : CardInfo list =
     
     cards
     
-let getSetPage (name: string) (cookie: string) (client : HttpClient) : XDocument Task =
+let private getSetPage (name: string) (cookie: string) (client : HttpClient) : XDocument Task =
     let url = sprintf "https://mtg.design/set/%s" name
     getXDoc url cookie client
     
-let getCardEditPage (id: string) (cookie: string) (client : HttpClient) : XDocument Task =
+let private getCardEditPage (id: string) (cookie: string) (client : HttpClient) : XDocument Task =
     let url = sprintf "https://mtg.design/i/%s/edit" id
     getXDoc url cookie client
     
-let getElementById (doc: XDocument, id: string): XElement =
+let private getElementById (doc: XDocument, id: string): XElement =
     doc.Descendants()
     |> Seq.filter (fun el -> el.Attribute(XName.op_Implicit("id")) <> null)
     |> Seq.find (fun el -> el.Attribute(XName.op_Implicit("id")).Value = id)
 
-let getCardDetailsFromPage (doc: XDocument) : CardDetails =
+let private getCardDetailsFromPage (doc: XDocument) : CardDetails =
     printfn "Parsing card details..."
 
     let getValue(id: string): string = 
@@ -137,7 +137,7 @@ let getCardDetailsFromPage (doc: XDocument) : CardDetails =
     printfn "Parsed %s." card.Name
     card
 
-let getCardDetails (cardInfos: CardInfo list) (cookie: string) (client: HttpClient) : CardDetails list Task =
+let private getCardDetails (cardInfos: CardInfo list) (cookie: string) (client: HttpClient) : CardDetails list Task =
     task {
         let tasks = 
             cardInfos 
@@ -152,4 +152,12 @@ let getCardDetails (cardInfos: CardInfo list) (cookie: string) (client: HttpClie
         let! _ = Task.WhenAll tasks
 
         return tasks |> List.map (fun t -> t.Result)
+    }
+
+let getSetCards (setName : string) (cookie: string) (client : HttpClient) : CardDetails list Task = 
+    task {
+        let! setPage = getSetPage setName cookie client
+        let cardInfos = getCardListFromSetPage setPage
+        let! cardDetails = getCardDetails cardInfos cookie client
+        return cardDetails
     }

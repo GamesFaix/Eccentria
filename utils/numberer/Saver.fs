@@ -1,5 +1,5 @@
 ﻿// Saves card changes.
-module Updater
+module Saver
 
 open System
 open System.Net.Http
@@ -9,7 +9,9 @@ open System.Net
 open System.Web
 open Model
 
-let renderCard (card: CardDetails) (client: HttpClient) : unit Task =
+type SaverMode = Create | Edit
+
+let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient) : unit Task =
     task {
         printfn "Rendering %s..." card.Name
 
@@ -40,7 +42,7 @@ let renderCard (card: CardDetails) (client: HttpClient) : unit Task =
         query.Add("card-template", card.Template)
         query.Add("card-accent", card.LandOverlay)
         query.Add("stars", "0") // ???
-        query.Add("edit", card.Id)
+        query.Add("edit", if mode = SaverMode.Create then "false" else card.Id)
 
         let url = sprintf "https://mtg.design/render?%s" (query.ToString())
 
@@ -51,12 +53,12 @@ let renderCard (card: CardDetails) (client: HttpClient) : unit Task =
         return ()
     }
 
-let shareCard (card : CardDetails) (client: HttpClient): unit Task =
+let private shareCard (card : CardDetails) (mode: SaverMode) (client: HttpClient): unit Task =
     task {
         printfn "Sharing %s..." card.Name
 
         let query = HttpUtility.ParseQueryString("")
-        query.Add("edit", card.Id)
+        query.Add("edit", if mode = SaverMode.Create then "false" else card.Id)
         query.Add("name", card.Name)
         
         let url = sprintf "https://mtg.design/shared?%s" (query.ToString())
@@ -68,12 +70,12 @@ let shareCard (card : CardDetails) (client: HttpClient): unit Task =
         return ()
     }
 
-let saveCards (cards : CardDetails list) (client: HttpClient) : unit Task =
+let saveCards (cards : CardDetails list) (mode : SaverMode) (client: HttpClient) : unit Task =
     task {
         // Must go in series or the same image gets rendered for each card
         for c in cards do
-            let! _ = renderCard c client
-            let! _ = shareCard c client
+            let! _ = renderCard c mode client
+            let! _ = shareCard c mode client
             ()
          
         return ()

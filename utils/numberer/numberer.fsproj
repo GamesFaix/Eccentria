@@ -9,7 +9,7 @@
     <Compile Include="Model.fs" />
     <Compile Include="Scraper.fs" />
     <Compile Include="Processor.fs" />
-    <Compile Include="Updater.fs" />
+    <Compile Include="Saver.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
