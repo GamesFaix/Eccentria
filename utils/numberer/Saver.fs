@@ -11,6 +11,15 @@ open Model
 
 type SaverMode = Create | Edit
 
+let getAccent (card: CardDetails) : string =
+    if card.SpecialFrames = "token" 
+    then "C"
+    else
+        let colors = Processor.getColors card
+        if colors.Length > 0 
+        then String(colors |> Seq.toArray)
+        else card.LandOverlay   
+
 let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient) : unit Task =
     task {
         printfn "Rendering %s..." card.Name
@@ -40,7 +49,7 @@ let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient
         query.Add("rules-text", card.RulesText)
         query.Add("flavor-text", card.FlavorText)
         query.Add("card-template", card.Template)
-        query.Add("card-accent", if card.SpecialFrames = "token" then "C" else card.LandOverlay)
+        query.Add("card-accent", getAccent card)
         if card.SpecialFrames = "token" then query.Add("land-overlay", card.LandOverlay) else ()
         query.Add("stars", "0") // ???
         query.Add("edit", if mode = SaverMode.Create then "false" else card.Id)
