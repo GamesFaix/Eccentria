@@ -23,7 +23,7 @@ let cardsToCenter = [
     "Black Lotus"
 ]
 
-let private getColors (card: CardDetails) : char list =
+let getColors (card: CardDetails) : char list =
     card.ManaCost.Intersect(['W';'U';'B';'R';'G']) |> Seq.toList
 
 let private getColorGroup (card: CardDetails) : ColorGroup = 
