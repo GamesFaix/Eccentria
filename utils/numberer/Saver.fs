@@ -45,6 +45,11 @@ let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient
         query.Add("stars", "0") // ???
         query.Add("edit", if mode = SaverMode.Create then "false" else card.Id)
         if not <| String.IsNullOrEmpty(card.ColorIndicator) then query.Add("color-indicator", card.ColorIndicator) else ()  
+        if not <| String.IsNullOrEmpty(card.PlaneswalkerSize) then query.Add("pw-size", card.PlaneswalkerSize) else ()
+        if not <| String.IsNullOrEmpty(card.Rules2) then query.Add("pw-text2", card.Rules2) else ()
+        if not <| String.IsNullOrEmpty(card.Rules3) then query.Add("pw-text3", card.Rules3) else ()
+        if not <| String.IsNullOrEmpty(card.Rules4) then query.Add("pw-text4", card.Rules4) else ()
+        // Not yet supporting loyalty costs for planeswalkers
 
         let mutable url = sprintf "https://mtg.design/render?%s" (query.ToString())
         url <- url.Replace("+", "%20")

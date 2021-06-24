@@ -39,6 +39,16 @@ type CardDetails = {
     // Extra properties that are conditional based on other choices, like saga frame
     LandOverlay: string
     Template: string
+
+    // Sagas & Planeswalkers
+    PlaneswalkerSize: string
+    LoyaltyCost1: string
+    Rules2: string
+    LoyaltyCost2: string
+    Rules3: string
+    LoyaltyCost3: string
+    Rules4: string
+    LoyaltyCost4: string
 }
 
 // Group used for assigning card numbers.

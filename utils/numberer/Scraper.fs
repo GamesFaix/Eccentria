@@ -132,6 +132,14 @@ let private getCardDetailsFromPage (doc: XDocument) : CardDetails =
         Toughness = getValue("toughness")
         LandOverlay = getValue("land-overlay")
         Template = ""
+        PlaneswalkerSize = getValue("pw-size")
+        Rules2 = getValue("planeswalker-text-2")
+        Rules3 = getValue("planeswalker-text-3")
+        Rules4 = getValue("planeswalker-text-4")
+        LoyaltyCost1 = getValue("loyalty-ability-1")
+        LoyaltyCost2 = getValue("loyalty-ability-2")
+        LoyaltyCost3 = getValue("loyalty-ability-3")
+        LoyaltyCost4 = getValue("loyalty-ability-4")
     }
 
     printfn "Parsed %s." card.Name
