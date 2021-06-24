@@ -69,17 +69,46 @@ let private getCardTemplate (card: CardDetails) : string =
     | 2 -> 
         if not <| card.ManaCost.Contains('/') then "Gld"
         else String(colors |> Seq.toArray)
-    | _ -> "Gld"   
+    | _ -> "Gld"  
+    
+let private getAccent (card: CardDetails) : string =
+    if card.SpecialFrames = "token" 
+    then "C"
+    else
+        let colors = getColors card
+        match colors.Length with
+        | 0 -> 
+            if card.LandOverlay = "A" then "C" 
+            else card.LandOverlay
+        | 1 -> colors.Head.ToString()
+        | 2 ->
+            if colors.Contains('W') && colors.Contains('U') then "WU"
+            elif colors.Contains('U') && colors.Contains('B') then "UB"
+            elif colors.Contains('B') && colors.Contains('R') then "BR"
+            elif colors.Contains('R') && colors.Contains('G') then "RG"
+            elif colors.Contains('G') && colors.Contains('W') then "GW"
+            elif colors.Contains('W') && colors.Contains('B') then "WB"
+            elif colors.Contains('W') && colors.Contains('R') then "RW"
+            elif colors.Contains('U') && colors.Contains('R') then "UR"
+            elif colors.Contains('U') && colors.Contains('G') then "GU"
+            elif colors.Contains('B') && colors.Contains('G') then "BG"
+            else failwith "invalid colors"
+        | _ -> "Gld"
 
 let processCard (card: CardDetails) : CardDetails =
+    // Set accent and template
+    let card = 
+        { card with 
+            Template = getCardTemplate card 
+            Accent = getAccent card
+        }
+
     // Fix centering bug
     let card =
         if cardsToCenter |> Seq.contains card.Name 
         then { card with Center = "true" }
         else card
    
-    let card = { card with Template = getCardTemplate card }
-
     card
 
 let processCards (cards : CardDetails list) : CardDetails list =

@@ -12,31 +12,8 @@ open Model
 
 type SaverMode = Create | Edit
 
-let getAccent (card: CardDetails) : string =
-    if card.SpecialFrames = "token" 
-    then "C"
-    else
-        let colors = Processor.getColors card
-        match colors.Length with
-        | 0 -> card.LandOverlay
-        | 1 -> colors.Head.ToString()
-        | 2 ->
-            if colors.Contains('W') && colors.Contains('U') then "WU"
-            elif colors.Contains('U') && colors.Contains('B') then "UB"
-            elif colors.Contains('B') && colors.Contains('R') then "BR"
-            elif colors.Contains('R') && colors.Contains('G') then "RG"
-            elif colors.Contains('G') && colors.Contains('W') then "GW"
-            elif colors.Contains('W') && colors.Contains('B') then "WB"
-            elif colors.Contains('W') && colors.Contains('R') then "RW"
-            elif colors.Contains('U') && colors.Contains('R') then "UR"
-            elif colors.Contains('U') && colors.Contains('G') then "GU"
-            elif colors.Contains('B') && colors.Contains('G') then "BG"
-            else failwith "invalid colors"
-        | _ -> "Gld"
-
 let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient) : unit Task =
     task {
-
         let query = HttpUtility.ParseQueryString("")
         query.Add("card-number", card.Number)
         query.Add("card-total", card.Total)
@@ -62,8 +39,9 @@ let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient
         query.Add("rules-text", card.RulesText)
         query.Add("flavor-text", card.FlavorText)
         query.Add("card-template", card.Template)
-        query.Add("card-accent", getAccent card)
-        if card.SpecialFrames = "token" then query.Add("land-overlay", card.LandOverlay) else ()
+        query.Add("card-accent", card.Accent)
+        if card.SpecialFrames = "token" || card.Type.Contains("Land")
+        then query.Add("land-overlay", card.LandOverlay) else ()
         query.Add("stars", "0") // ???
         query.Add("edit", if mode = SaverMode.Create then "false" else card.Id)
         if not <| String.IsNullOrEmpty(card.ColorIndicator) then query.Add("color-indicator", card.ColorIndicator) else ()  
@@ -115,7 +93,7 @@ let saveCards (client: HttpClient) (mode : SaverMode) (cards : CardDetails list)
     // Must go in series or the same image gets rendered for each card
     cards |> Utils.seriesMap (saveCard client mode) |> Utils.mergeUnit
     
-let private deleteCard (client: HttpClient) (card: CardInfo) : unit Task =
+let deleteCard (client: HttpClient) (card: CardInfo) : unit Task =
     task {
         printfn "\tDeleting %s - %s..." card.Set card.Name
         let url = sprintf "https://mtg.design/set/%s/i/%s/delete" card.Set card.Id

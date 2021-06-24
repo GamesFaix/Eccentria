@@ -40,6 +40,7 @@ type CardDetails = {
     // Extra properties that are conditional based on other choices, like saga frame
     LandOverlay: string
     Template: string
+    Accent: string
 
     // Sagas & Planeswalkers
     PlaneswalkerSize: string

@@ -22,6 +22,7 @@ let seriesMap<'a, 'b> (f : 'a -> 'b Task) (xs : 'a list) : 'b list Task =
 
         for x in xs do
             let! result = f x
+            results.Add result
             ()
 
         return results |> Seq.toList
