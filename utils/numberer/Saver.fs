@@ -22,7 +22,6 @@ let getAccent (card: CardDetails) : string =
 
 let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient) : unit Task =
     task {
-        printfn "Rendering %s..." card.Name
 
         let query = HttpUtility.ParseQueryString("")
         query.Add("card-number", card.Number)
@@ -68,13 +67,11 @@ let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient
         let! response = client.GetAsync(url)
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "render error" else ()
 
-        printfn "Rendered %s." card.Name
         return ()
     }
 
 let private shareCard (card : CardDetails) (mode: SaverMode) (client: HttpClient): unit Task =
     task {
-        printfn "Sharing %s..." card.Name
 
         let query = HttpUtility.ParseQueryString("")
         query.Add("edit", if mode = SaverMode.Create then "false" else card.Id)
@@ -85,30 +82,35 @@ let private shareCard (card : CardDetails) (mode: SaverMode) (client: HttpClient
         let! response = client.GetAsync(url)
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "share error" else ()
         
-        printfn "Shared %s." card.Name
         return ()
     }
 
 let private saveCard (client: HttpClient) (mode: SaverMode) (card: CardDetails) : unit Task =
     task {
+        printfn "\tRendering (%s/%s) %s..." card.Number card.Total card.Name
         let! _ = renderCard card mode client
+        printfn "\tRendered (%s/%s) %s." card.Number card.Total card.Name
+        printfn "\tSharing (%s/%s) %s..." card.Number card.Total card.Name
         let! _ = shareCard card mode client
+        printfn "\tShared (%s/%s) %s." card.Number card.Total card.Name
         ()
     }
 
 let saveCards (client: HttpClient) (mode : SaverMode) (cards : CardDetails list) : unit Task =
+    printfn "Saving cards..."
     // Must go in series or the same image gets rendered for each card
     cards |> Utils.seriesMap (saveCard client mode) |> Utils.mergeUnit
     
 let private deleteCard (client: HttpClient) (card: CardInfo) : unit Task =
     task {
-        printfn "Deleting %s - %s..." card.Set card.Name
+        printfn "\tDeleting %s - %s..." card.Set card.Name
         let url = sprintf "https://mtg.design/set/%s/i/%s/delete" card.Set card.Id
         let! response = client.GetAsync url
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "delete error" else ()        
-        printfn "Deleted %s - %s." card.Set card.Name
+        printfn "\tDeleted %s - %s." card.Set card.Name
         return ()
     }
 
 let deleteCards (cards : CardInfo list) (client : HttpClient) : unit Task =
+    printfn "Deleting cards..."
     cards |> Utils.concurrentMap (deleteCard client) |> Utils.mergeUnit

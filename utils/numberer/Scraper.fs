@@ -79,8 +79,6 @@ let private getCardInfosFromSetPage (setName: string) (doc: XDocument) : CardInf
     cards
         
 let private getCardDetailsFromCardPage (doc: XDocument) : CardDetails =
-    printfn "Parsing card details..."
-
     let getValue(id: string): string = 
         let el = getElementById(doc, id)
         let valueAttr = el.Attribute(XName.op_Implicit("value"))
@@ -126,8 +124,6 @@ let private getCardDetailsFromCardPage (doc: XDocument) : CardDetails =
         LoyaltyCost3 = getValue("loyalty-ability-3")
         LoyaltyCost4 = getValue("loyalty-ability-4")
     }
-
-    printfn "Parsed %s." card.Name
     card
 
 let getSetCardInfos (cookie: string) (client: HttpClient) (setName: string) : CardInfo list Task =
@@ -147,15 +143,19 @@ let getSetCardInfos (cookie: string) (client: HttpClient) (setName: string) : Ca
 
 let private getCardDetails (cookie: string) (client: HttpClient) (cardInfo: CardInfo) : CardDetails Task =
     task {
+        printfn "\tParsing details for %s..." cardInfo.Name
         let url = sprintf "https://mtg.design/i/%s/edit" cardInfo.Id
         let! page = getXDoc cookie client url
         let card = getCardDetailsFromCardPage page
+        printfn "\tParsed %s." cardInfo.Name
         return { card with Id = cardInfo.Id }
     }
 
 let getSetCardDetails (cookie: string) (client : HttpClient) (setName : string) : CardDetails list Task = 
     task {
+        printfn "Parsing card details..."
         let! cardInfos = getSetCardInfos cookie client setName
         let! cardDetails = cardInfos |> Utils.concurrentMap (getCardDetails cookie client)
+        printfn "Card details parsed."
         return cardDetails
     }

@@ -62,7 +62,9 @@ let private getCardTemplate (card: CardDetails) : string =
     | _ -> "Gld"   
 
 let processCards (cards : CardDetails list) : CardDetails list =
-    printfn "Generating card numbers..."
+    printfn "Processing cards..."
+
+    printfn "\tGenerating card numbers..."
     let withNumbers = 
         let count = cards.Length
         generateNumbers cards 
@@ -72,7 +74,7 @@ let processCards (cards : CardDetails list) : CardDetails list =
                 Total = count.ToString() 
             })
 
-    printfn "Fixing centering bug..."
+    printfn "\tFixing centering bug..."
     let withCenteringCorrected =
         withNumbers
         |> Seq.map (fun c -> 
@@ -81,7 +83,7 @@ let processCards (cards : CardDetails list) : CardDetails list =
             else c
         )
 
-    printfn "Setting templates..."
+    printfn "\tSetting templates..."
     let withTemplates =
         withCenteringCorrected
         |> Seq.map (fun c -> { c with Template = getCardTemplate c })
