@@ -141,7 +141,7 @@ let getSetCardInfos (cookie: string) (client: HttpClient) (setName: string) : Ca
         return cards
     }
 
-let private getCardDetails (cookie: string) (client: HttpClient) (cardInfo: CardInfo) : CardDetails Task =
+let getCardDetails (cookie: string) (client: HttpClient) (cardInfo: CardInfo) : CardDetails Task =
     task {
         printfn "\tParsing details for %s..." cardInfo.Name
         let url = sprintf "https://mtg.design/i/%s/edit" cardInfo.Id

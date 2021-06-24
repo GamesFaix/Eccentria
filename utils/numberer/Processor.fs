@@ -51,6 +51,16 @@ let private generateNumbers (cards: CardDetails seq) : (int * CardDetails) seq =
     |> Seq.indexed
     |> Seq.map (fun (n, c) -> (n+1, c))
 
+let private generateAndApplyNumbers (cards: CardDetails list) : CardDetails list =
+    let count = cards.Length
+    generateNumbers cards 
+    |> Seq.map (fun (n, c) -> 
+        { c with 
+            Number = n.ToString().PadLeft(count.ToString().Length, '0'); 
+            Total = count.ToString() 
+        })
+    |> Seq.toList
+
 let private getCardTemplate (card: CardDetails) : string =
     let colors = getColors card
     match colors.Length with
@@ -61,31 +71,24 @@ let private getCardTemplate (card: CardDetails) : string =
         else String(colors |> Seq.toArray)
     | _ -> "Gld"   
 
+let processCard (card: CardDetails) : CardDetails =
+    // Fix centering bug
+    let card =
+        if cardsToCenter |> Seq.contains card.Name 
+        then { card with Center = "true" }
+        else card
+   
+    let card = { card with Template = getCardTemplate card }
+
+    card
+
 let processCards (cards : CardDetails list) : CardDetails list =
     printfn "Processing cards..."
 
+    printfn "\tCalculating properties..."
+    let cards = cards |> List.map processCard
+
     printfn "\tGenerating card numbers..."
-    let withNumbers = 
-        let count = cards.Length
-        generateNumbers cards 
-        |> Seq.map (fun (n, c) -> 
-            { c with 
-                Number = n.ToString().PadLeft(count.ToString().Length, '0'); 
-                Total = count.ToString() 
-            })
+    let cards = generateAndApplyNumbers cards
 
-    printfn "\tFixing centering bug..."
-    let withCenteringCorrected =
-        withNumbers
-        |> Seq.map (fun c -> 
-            if cardsToCenter |> Seq.contains c.Name 
-            then { c with Center = "true" }
-            else c
-        )
-
-    printfn "\tSetting templates..."
-    let withTemplates =
-        withCenteringCorrected
-        |> Seq.map (fun c -> { c with Template = getCardTemplate c })
-
-    withTemplates |> Seq.toList
+    cards

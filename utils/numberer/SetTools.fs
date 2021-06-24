@@ -43,3 +43,16 @@ let deleteSet (client: HttpClient) (cookie: string) (setName : string) : unit Ta
         printfn "Done."
         return ()
     }
+
+let cloneCard (client: HttpClient) (cookie: string) (setName: string) (cardName: string) (newSetName: string) : unit Task =
+    task {
+        printfn "Cloning %s from %s to %s..." cardName setName newSetName
+        let! cardInfos = Scraper.getSetCardInfos cookie client setName
+        let card = cardInfos |> Seq.find (fun c -> c.Name = cardName)
+        let! details = Scraper.getCardDetails cookie client card
+        let details = Processor.processCard details
+        let details = { details with Set = newSetName }
+        let! _ = Saver.saveCards client Saver.SaverMode.Create [details]
+        printfn "Done."
+        return()
+    }

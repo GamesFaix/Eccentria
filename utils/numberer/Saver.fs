@@ -2,6 +2,7 @@
 module Saver
 
 open System
+open System.Linq
 open System.Net.Http
 open System.Threading.Tasks
 open FSharp.Control.Tasks
@@ -16,9 +17,22 @@ let getAccent (card: CardDetails) : string =
     then "C"
     else
         let colors = Processor.getColors card
-        if colors.Length > 0 
-        then String(colors |> Seq.toArray)
-        else card.LandOverlay   
+        match colors.Length with
+        | 0 -> card.LandOverlay
+        | 1 -> colors.Head.ToString()
+        | 2 ->
+            if colors.Contains('W') && colors.Contains('U') then "WU"
+            elif colors.Contains('U') && colors.Contains('B') then "UB"
+            elif colors.Contains('B') && colors.Contains('R') then "BR"
+            elif colors.Contains('R') && colors.Contains('G') then "RG"
+            elif colors.Contains('G') && colors.Contains('W') then "GW"
+            elif colors.Contains('W') && colors.Contains('B') then "WB"
+            elif colors.Contains('W') && colors.Contains('R') then "RW"
+            elif colors.Contains('U') && colors.Contains('R') then "UR"
+            elif colors.Contains('U') && colors.Contains('G') then "GU"
+            elif colors.Contains('B') && colors.Contains('G') then "BG"
+            else failwith "invalid colors"
+        | _ -> "Gld"
 
 let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient) : unit Task =
     task {
