@@ -5,6 +5,7 @@
 type CardInfo = {
     Id : string
     Name : string
+    Set: string
 }
 
 // Full card info.

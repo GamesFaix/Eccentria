@@ -89,18 +89,18 @@ let private shareCard (card : CardDetails) (mode: SaverMode) (client: HttpClient
         return ()
     }
 
-let saveCards (cards : CardDetails list) (mode : SaverMode) (client: HttpClient) : unit Task =
+let private saveCard (client: HttpClient) (mode: SaverMode) (card: CardDetails) : unit Task =
     task {
-        // Must go in series or the same image gets rendered for each card
-        for c in cards do
-            let! _ = renderCard c mode client
-            let! _ = shareCard c mode client
-            ()
-         
-        return ()
+        let! _ = renderCard card mode client
+        let! _ = shareCard card mode client
+        ()
     }
 
-let private deleteCard (card: CardDetails) (client: HttpClient) : unit Task =
+let saveCards (client: HttpClient) (mode : SaverMode) (cards : CardDetails list) : unit Task =
+    // Must go in series or the same image gets rendered for each card
+    cards |> Utils.seriesMap (saveCard client mode) |> Utils.mergeUnit
+    
+let private deleteCard (client: HttpClient) (card: CardInfo) : unit Task =
     task {
         printfn "Deleting %s - %s..." card.Set card.Name
         let url = sprintf "https://mtg.design/set/%s/i/%s/delete" card.Set card.Id
@@ -110,11 +110,5 @@ let private deleteCard (card: CardDetails) (client: HttpClient) : unit Task =
         return ()
     }
 
-let deleteCards (cards : CardDetails list) (client : HttpClient) : unit Task =
-    task {
-        for c in cards do
-            let! _ = deleteCard c client
-            ()
-
-        return ()
-    }
+let deleteCards (cards : CardInfo list) (client : HttpClient) : unit Task =
+    cards |> Utils.concurrentMap (deleteCard client) |> Utils.mergeUnit
