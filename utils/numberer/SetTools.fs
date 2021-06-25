@@ -5,6 +5,7 @@ open System.Net.Http
 open FSharp.Control.Tasks
 open System.Threading.Tasks
 open System
+open Model
 
 let autonumberSet (client: HttpClient) (cookie: string) (setName: string) : unit Task =
     task {
@@ -74,17 +75,20 @@ let private rootDir =
     let desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
     sprintf "%s/card-images" desktop
 
+
+let downloadCardImage (client: HttpClient) (card: CardInfo) : unit Task =
+    task {
+        printfn "Downloading %s..." card.Name
+        let path = sprintf "%s/%s/%s.jpg" rootDir card.Set (card.Name.Replace(" ", "-"))
+        let! _ = Downloader.downloadCardImage client card path
+        return ()    
+    }
+
 let downloadSetImages (client: HttpClient) (cookie: string) (setName: string) : unit Task =
     task {
         printfn "Downloading images for %s..." setName
         let! cardInfos = Scraper.getSetCardInfos cookie client setName
-
-        for c in cardInfos do
-            printfn "Downloading %s..." c.Name
-            let path = sprintf "%s/%s/%s.jpg" rootDir setName c.Id
-            let! _ = Downloader.downloadCardImage client c path
-            ()
-
+        let! _ = cardInfos |> Utils.concurrentMap (downloadCardImage client)
         printfn "Done."
         return ()
     }
