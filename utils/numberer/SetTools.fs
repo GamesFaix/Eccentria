@@ -70,18 +70,11 @@ let cloneCard (client: HttpClient) (cookie: string) (setName: string) (cardName:
         return()
     }
 
-
-let private rootDir = 
-    let desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-    sprintf "%s/card-images" desktop
-
-
-let downloadCardImage (client: HttpClient) (card: CardInfo) : unit Task =
+let private downloadCardImage (client: HttpClient) (card: CardInfo) : unit Task =
     task {
         printfn "Downloading %s..." card.Name
-        let path = sprintf "%s/%s/%s.jpg" rootDir card.Set (card.Name.Replace(" ", "-"))
         let! bytes = MtgDesignReader.getCardImage client card
-        let! _ = FileReaderWriter.saveFile bytes path
+        let! _ = FileReaderWriter.saveCardImage bytes card
         return ()    
     }
 
