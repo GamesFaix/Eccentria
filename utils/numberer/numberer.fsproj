@@ -8,10 +8,11 @@
   <ItemGroup>
     <Compile Include="Model.fs" />
     <Compile Include="Utils.fs" />
-    <Compile Include="Scraper.fs" />
+    <Compile Include="MtgDesignReader.fs" />
     <Compile Include="Processor.fs" />
-    <Compile Include="Downloader.fs" />
-    <Compile Include="Saver.fs" />
+    <Compile Include="FileReaderWriter.fs" />
+    <Compile Include="MtgDesignWriter.fs" />
+    <Compile Include="Layouter.fs" />
     <Compile Include="SetTools.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

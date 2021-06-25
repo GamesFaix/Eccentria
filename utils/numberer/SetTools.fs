@@ -86,3 +86,13 @@ let downloadSetImages (client: HttpClient) (cookie: string) (setName: string) : 
         printfn "Done."
         return ()
     }
+
+let createHtmlLayout (client: HttpClient) (cookie: string) (setName: string) : unit Task =
+    task {
+        printfn "Creating HTML layout for %s..." setName
+        let! cardInfos = MtgDesignReader.getSetCardInfos cookie client setName
+        let html = Layouter.createHtmlLayout cardInfos
+        let! _ = FileReaderWriter.saveHtmlLayout html setName
+        printfn "Done."
+        return ()
+    }

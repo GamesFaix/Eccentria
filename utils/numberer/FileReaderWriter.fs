@@ -26,15 +26,18 @@ let private saveFileText (text: string) (path: string): unit Task =
         return! File.WriteAllTextAsync(path, text)
     }
     
-let private getSetDir (setName: string) : string =
+let getSetDir (setName: string) : string =
     sprintf "%s/%s" rootDir setName
 
-let private getCardImagePath (card: CardInfo) : string =
+let getCardImagePath (card: CardInfo) : string =
     sprintf "%s/%s.jpg" (getSetDir card.Set) (card.Name.Replace(" ", "-"))
+
+let getHtmlLayoutPath (setName: string) : string =
+    sprintf "%s/layout.html" (getSetDir setName)
 
 let saveCardImage (bytes: byte[]) (card: CardInfo) : unit Task =
     saveFileBytes bytes (getCardImagePath card)
 
 let saveHtmlLayout (html: string) (setName: string) : unit Task =
-    saveFileText html (getSetDir setName)
+    saveFileText html (getHtmlLayoutPath setName)
 
