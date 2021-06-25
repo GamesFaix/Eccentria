@@ -1,8 +1,7 @@
 ﻿// Saves card changes.
-module Saver
+module MtgDesignWriter
 
 open System
-open System.Linq
 open System.Net.Http
 open System.Threading.Tasks
 open FSharp.Control.Tasks

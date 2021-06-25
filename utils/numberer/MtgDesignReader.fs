@@ -1,5 +1,5 @@
 ﻿// Reads data from pages
-module Scraper
+module MtgDesignReader
 
 open System
 open System.IO
@@ -159,4 +159,12 @@ let getSetCardDetails (cookie: string) (client : HttpClient) (setName : string) 
         let! cardDetails = cardInfos |> Utils.concurrentMap (getCardDetails cookie client)
         printfn "Card details parsed."
         return cardDetails
+    }
+
+let getCardImage (client: HttpClient) (card: CardInfo) : byte[] Task = 
+    task {
+        let url = sprintf "https://mtg.design/i/%s.jpg" card.Id
+        let! response = client.GetAsync url
+        let! bytes = response.Content.ReadAsByteArrayAsync()
+        return bytes
     }
