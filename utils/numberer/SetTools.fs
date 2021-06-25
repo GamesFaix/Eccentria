@@ -4,6 +4,7 @@ module SetTools
 open System.Net.Http
 open FSharp.Control.Tasks
 open System.Threading.Tasks
+open System
 
 let autonumberSet (client: HttpClient) (cookie: string) (setName: string) : unit Task =
     task {
@@ -66,4 +67,24 @@ let cloneCard (client: HttpClient) (cookie: string) (setName: string) (cardName:
         let! _ = Saver.saveCards client Saver.SaverMode.Create [details]
         printfn "Done."
         return()
+    }
+
+
+let private rootDir = 
+    let desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+    sprintf "%s/card-images" desktop
+
+let downloadSetImages (client: HttpClient) (cookie: string) (setName: string) : unit Task =
+    task {
+        printfn "Downloading images for %s..." setName
+        let! cardInfos = Scraper.getSetCardInfos cookie client setName
+
+        for c in cardInfos do
+            printfn "Downloading %s..." c.Name
+            let path = sprintf "%s/%s/%s.jpg" rootDir setName c.Id
+            let! _ = Downloader.downloadCardImage client c path
+            ()
+
+        printfn "Done."
+        return ()
     }
