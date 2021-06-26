@@ -107,3 +107,18 @@ let createPdfLayout (client: HttpClient) (cookie: string) (setName: string) : un
         printfn "Done."       
         return ()
     }
+
+let audit (client: HttpClient) (cookie: string) (setName: string) : unit Task =
+    task {
+        printfn "Auditing issues for %s..." setName
+        let! cards = MtgDesignReader.getSetCardDetails cookie client setName
+        let cards = Processor.processCards cards
+        let issues = Auditor.findIssues cards
+        let groupByDesc = issues |> Seq.groupBy (fun iss -> iss.description)
+        for (key, xs) in groupByDesc do
+            printfn "\t%s" key
+            for issue in xs do
+                printfn "\t\t%s" issue.cardName
+        printfn "Done."
+        return ()
+    }

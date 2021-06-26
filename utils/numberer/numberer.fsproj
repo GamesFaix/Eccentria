@@ -13,6 +13,7 @@
     <Compile Include="FileReaderWriter.fs" />
     <Compile Include="MtgDesignWriter.fs" />
     <Compile Include="Layouter.fs" />
+    <Compile Include="Auditor.fs" />
     <Compile Include="SetTools.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
