@@ -6,8 +6,7 @@ let private getStyleTag (heightInches: float, widthInches: float) : string =
     sprintf "<style> img { height: %fin; width: %fin; }</style>" heightInches widthInches
 
 let private getImageTag (card: CardInfo) : string =
-    let path = sprintf "%s.jpg" (card.Name.Replace(" ", "-"))
-    sprintf "<img src=\"%s\"/>" path
+    sprintf "<img src=\"%s\"/>" (FileReaderWriter.getCardFileName card)
 
 let createHtmlLayout (cards : CardInfo list) : string =
     let styleTag = getStyleTag (3.5, 2.5)

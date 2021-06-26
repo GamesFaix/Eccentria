@@ -29,8 +29,11 @@ let private saveFileText (text: string) (path: string): unit Task =
 let getSetDir (setName: string) : string =
     sprintf "%s/%s" rootDir setName
 
+let getCardFileName (card: CardInfo): string =
+    sprintf "%s.jpg" (card.Name.Replace(" ", "-").Replace("?", "-"))
+    
 let getCardImagePath (card: CardInfo) : string =
-    sprintf "%s/%s.jpg" (getSetDir card.Set) (card.Name.Replace(" ", "-"))
+    sprintf "%s/%s" (getSetDir card.Set) (getCardFileName card)
 
 let getHtmlLayoutPath (setName: string) : string =
     sprintf "%s/layout.html" (getSetDir setName)
