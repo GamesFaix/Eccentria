@@ -4,7 +4,6 @@ module SetTools
 open System.Net.Http
 open FSharp.Control.Tasks
 open System.Threading.Tasks
-open System
 open Model
 
 let autonumberSet (client: HttpClient) (cookie: string) (setName: string) : unit Task =
@@ -95,5 +94,16 @@ let createHtmlLayout (client: HttpClient) (cookie: string) (setName: string) : u
         let html = Layouter.createHtmlLayout cardInfos
         let! _ = FileReaderWriter.saveHtmlLayout html setName
         printfn "Done."
+        return ()
+    }
+
+let createPdfLayout (client: HttpClient) (cookie: string) (setName: string) : unit Task =
+    task {
+        printfn "Creating PDF layout for %s..." setName
+        let! cardInfos = MtgDesignReader.getSetCardInfos cookie client setName
+        let html = Layouter.createHtmlLayout cardInfos
+        let! bytes = Layouter.convertToPdf html 
+        let! _ = FileReaderWriter.savePdfLayout bytes setName
+        printfn "Done."       
         return ()
     }

@@ -38,11 +38,17 @@ let getCardImagePath (card: CardInfo) : string =
 let getHtmlLayoutPath (setName: string) : string =
     sprintf "%s/layout.html" (getSetDir setName)
 
+let getPdfLayoutPath (setName: string) : string =
+    sprintf "%s/layout.pdf" (getSetDir setName)    
+
 let saveCardImage (bytes: byte[]) (card: CardInfo) : unit Task =
     saveFileBytes bytes (getCardImagePath card)
 
 let saveHtmlLayout (html: string) (setName: string) : unit Task =
     saveFileText html (getHtmlLayoutPath setName)
+
+let savePdfLayout (bytes: byte[]) (setName: string) : unit Task =
+    saveFileBytes bytes (getPdfLayoutPath setName)
 
 let private deleteFolderIfExists (path: string) : unit =
     if Directory.Exists path 

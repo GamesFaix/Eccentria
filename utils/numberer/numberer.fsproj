@@ -17,9 +17,8 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
 
-  <ItemGroup />
-
   <ItemGroup>
+    <PackageReference Include="Select.HtmlToPdf.NetCore" Version="21.1.0" />
     <PackageReference Include="SgmlReader" Version="1.8.11" />
     <PackageReference Include="TaskBuilder.fs" Version="2.2.0-alpha" />
   </ItemGroup>
