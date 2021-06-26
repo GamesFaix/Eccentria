@@ -81,6 +81,7 @@ let private downloadCardImage (client: HttpClient) (card: CardInfo) : unit Task 
 let downloadSetImages (client: HttpClient) (cookie: string) (setName: string) : unit Task =
     task {
         printfn "Downloading images for %s..." setName
+        FileReaderWriter.deleteSetFolder setName
         let! cardInfos = MtgDesignReader.getSetCardInfos cookie client setName
         let! _ = cardInfos |> Utils.concurrentMap (downloadCardImage client)
         printfn "Done."

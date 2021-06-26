@@ -44,3 +44,10 @@ let saveCardImage (bytes: byte[]) (card: CardInfo) : unit Task =
 let saveHtmlLayout (html: string) (setName: string) : unit Task =
     saveFileText html (getHtmlLayoutPath setName)
 
+let private deleteFolderIfExists (path: string) : unit =
+    if Directory.Exists path 
+    then Directory.Delete(path, true)
+    else ()
+
+let deleteSetFolder (setName: string) : unit =
+    deleteFolderIfExists (getSetDir setName)
