@@ -21,6 +21,7 @@ let cardsToCenter = [
     "Master of None"
     "Never-Ending Story"
     "Black Lotus"
+    "Food"
 ]
 
 let getColors (card: CardDetails) : char list =
