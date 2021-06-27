@@ -24,6 +24,7 @@ let cardsToCenter = [
     "Food"
     "Treasure"
     "Boar"
+    "Tutor Booster"
 ]
 
 let getColors (card: CardDetails) : char list =
