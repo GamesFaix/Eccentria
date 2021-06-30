@@ -36,3 +36,10 @@ let findIssues (cards : CardDetails list) : Issue list =
     |> Seq.collect findCardIssues
     |> Seq.sortBy (fun iss -> sprintf "%s - %s" iss.description iss.cardName)
     |> Seq.toList
+
+let printIssues (issues: Issue list) : unit =
+    let groupByDesc = issues |> Seq.groupBy (fun iss -> iss.description)
+    for (key, xs) in groupByDesc do
+        printfn "\t%s" key
+        for issue in xs do
+            printfn "\t\t%s" issue.cardName

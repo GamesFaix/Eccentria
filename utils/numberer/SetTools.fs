@@ -1,7 +1,6 @@
 ﻿// High-level commands for managing sets
 module SetTools
 
-open System.Net.Http
 open FSharp.Control.Tasks
 open System.Threading.Tasks
 open Model
@@ -114,11 +113,7 @@ let audit (setName: string) : unit Task =
         let! cards = MtgDesignReader.getSetCardDetails setName
         let cards = Processor.processCards cards
         let issues = Auditor.findIssues cards
-        let groupByDesc = issues |> Seq.groupBy (fun iss -> iss.description)
-        for (key, xs) in groupByDesc do
-            printfn "\t%s" key
-            for issue in xs do
-                printfn "\t\t%s" issue.cardName
+        Auditor.printIssues issues
         printfn "Done."
         return ()
     }

@@ -1,6 +1,8 @@
 ﻿open System
-open System.Net.Http
 open System.Threading.Tasks
+open FSharp.Control.Tasks
+open Model
+open System.IO
 
 (* 
     mtg.design uses server side rendering, so no API available
@@ -15,14 +17,79 @@ open System.Threading.Tasks
 let block<'a> (task : 'a Task) : 'a = task.Result
 
 [<EntryPoint>]
-let main argv =
-    
-    let client = new HttpClient()    
-    let cookie = "remember_web_59ba36addc2b2f9401580f014c7f58ea4e30989d=eyJpdiI6IkZkTVl5dE5ScEJ1Y0xWeUpNZktYckE9PSIsInZhbHVlIjoiXC9FbVdEZWJlRUlHNDhzTmVMZVVCSWxNaWFSbCtNcFV1N0E4UjI4cDF6YkQ1VmtGXC9STFpHYm1raWVFYTF4dERaWTlmQkxSdTc2bU03VDF3c3h1RHlPWDlLOGVCUHBkdFZnWHNMblwvNjFuQXc9IiwibWFjIjoiOTM5ZDhkMTQwY2RlMzQ4M2IyZTM1ZjM1Y2ZlYjI0YjI2NmVhNDg1ZWU5YjI4ZWE0ZmViYmIyZmU3NjkzNWU3YiJ9; XSRF-TOKEN=eyJpdiI6IkNjMzhEcmVsaVpQb3JKR0VDckxcL1Z3PT0iLCJ2YWx1ZSI6IjZGbEQ2cTZtb0NpbE9DWnJxXC9oMlwvT0hOREN3T0g4cHIrVkphWHRSazFxblRvTmFFUkJaM0VoREhhZFNpRkFjZzFEQ29nRVBVN0Q2YU5yd1E0K3Z1Tmc9PSIsIm1hYyI6ImM5ZTc1YTY3YWM3ODJjYmZiMWUzNTkzZGE3NWJiNzcyNjlkYzFjYTIxZWZkZmJmNzM3MWRiYTU1YjFlMjM3ZGQifQ%3D%3D; laravel_session=fbd5eec3495cd3f3de7464700746e7283043afc9"
-    
-    SetTools.deleteSet client cookie "ZZZ" |> block
+let main _ =
+    task {
+        let setName = "ECC"
+        let readFromCache = true
+        let useCachedImages = true
+        let writeToCache = true
+        let writeToWeb = false
+        let mode = MtgDesignWriter.SaverMode.Edit
 
-    SetTools.renameSet client cookie "YYY" "MSC" |> block
+        printfn "Loading card details..."
+        let! cards = task {
+            if readFromCache
+            then match! FileReaderWriter.loadJsonDetails setName with
+                 | Some cards -> 
+                    printfn "\tFound in cache."
+                    return cards
+                 | _ -> return! MtgDesignReader.getSetCardDetails setName
+            else return! MtgDesignReader.getSetCardDetails setName
+        }
 
+        printfn "Processing cards..."
+        let cards = Processor.processCards cards
+
+        printfn "Auditing for issues..."
+        let issues = Auditor.findIssues cards
+        Auditor.printIssues issues
+
+        if writeToCache
+        then 
+            printfn "Caching card details..."
+            let! _ = FileReaderWriter.saveJsonDetails cards setName
+            ()
+        else ()
+
+        if writeToWeb
+        then 
+            printfn "Saving card details to mtg.design..."
+            let! _ = MtgDesignWriter.saveCards mode cards
+            ()
+        else ()
+
+        let cardInfos : CardInfo list = cards |> List.map (fun c -> 
+            { 
+                Name = c.Name
+                Set = c.Set
+                Id = c.Id
+            })
+
+        printfn "Downloading card images..."
+        let! _ = cardInfos |> Utils.concurrentMap (fun c -> task {
+            let path = FileReaderWriter.getCardImagePath c
+            if useCachedImages && File.Exists path
+            then
+                printfn "\tFound cached image for %s..." c.Name
+                return ()
+            else
+                printfn "\tDownloading image for %s..." c.Name
+                let! bytes = MtgDesignReader.getCardImage c
+                let! _ = FileReaderWriter.saveCardImage bytes c
+                return ()    
+        })
+
+        printfn "Creating HTML layout..."
+        let html = Layouter.createHtmlLayout cardInfos
+        let! _ = FileReaderWriter.saveHtmlLayout html setName
+
+        printfn "Creating PDF layout..."
+        let! pdf = Layouter.convertToPdf html
+        let! _ = FileReaderWriter.savePdfLayout pdf setName
+
+        printfn "Done."
+        return ()
+    } |> block
+    
     Console.Read() |> ignore
     0 // return an integer exit code

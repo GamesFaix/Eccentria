@@ -27,3 +27,4 @@ let seriesMap<'a, 'b> (f : 'a -> 'b Task) (xs : 'a list) : 'b list Task =
 
         return results |> Seq.toList
     }
+

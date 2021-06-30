@@ -5,7 +5,7 @@ open System.Threading.Tasks
 open System.IO
 open System
 open Model
-open System.Text.Json
+open Newtonsoft.Json
 
 let private rootDir = 
     let desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
@@ -55,9 +55,9 @@ let savePdfLayout (bytes: byte[]) (setName: string) : unit Task =
     saveFileBytes bytes (getPdfLayoutPath setName)
 
 let saveJsonDetails (cards: CardDetails list) (setName: string) : unit Task =
-    let options = JsonSerializerOptions()
-    options.WriteIndented <- true
-    let json = JsonSerializer.Serialize(cards, options)
+    let options = JsonSerializerSettings()
+    options.Formatting <- Formatting.Indented
+    let json = JsonConvert.SerializeObject(cards, options)
     saveFileText json (getJsonDetailsPath setName)
 
 let loadJsonDetails (setName: string) : CardDetails list option Task =
@@ -65,7 +65,7 @@ let loadJsonDetails (setName: string) : CardDetails list option Task =
         try 
             let path = getJsonDetailsPath setName
             let! json = File.ReadAllTextAsync path
-            let cards = JsonSerializer.Deserialize json
+            let cards = JsonConvert.DeserializeObject<CardDetails list> json
             return Some cards
         with
         | _ -> 
