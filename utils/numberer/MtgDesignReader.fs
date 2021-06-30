@@ -12,14 +12,14 @@ open Sgml
 open System.Text.RegularExpressions
 open Model
 
-let private getXDoc (cookie: string) (client : HttpClient) (url: string) : XDocument Task =    
+let private getXDoc (url: string) : XDocument Task =    
     task {
         use request = new HttpRequestMessage()
         request.RequestUri <- Uri(url)
         request.Method <- HttpMethod.Get
-        request.Headers.Add("Cookie", cookie)
+        request.Headers.Add("Cookie", Config.cookie)
 
-        let! response = client.SendAsync(request)
+        let! response = Config.client.SendAsync(request)
         let! stream = response.Content.ReadAsStreamAsync()
 
         let sgmlReader = new SgmlReader()
@@ -127,12 +127,12 @@ let private getCardDetailsFromCardPage (doc: XDocument) : CardDetails =
     }
     card
 
-let getSetCardInfos (cookie: string) (client: HttpClient) (setName: string) : CardInfo list Task =
+let getSetCardInfos (setName: string) : CardInfo list Task =
     task {
         printfn "Loading list of cards in %s..." setName
 
         let url = sprintf "https://mtg.design/set/%s" setName
-        let! page = getXDoc cookie client url
+        let! page = getXDoc url
         let cards = getCardInfosFromSetPage setName page       
         
         printfn "Found %i cards:" cards.Length
@@ -142,29 +142,29 @@ let getSetCardInfos (cookie: string) (client: HttpClient) (setName: string) : Ca
         return cards
     }
 
-let getCardDetails (cookie: string) (client: HttpClient) (cardInfo: CardInfo) : CardDetails Task =
+let getCardDetails (cardInfo: CardInfo) : CardDetails Task =
     task {
         printfn "\tParsing details for %s..." cardInfo.Name
         let url = sprintf "https://mtg.design/i/%s/edit" cardInfo.Id
-        let! page = getXDoc cookie client url
+        let! page = getXDoc url
         let card = getCardDetailsFromCardPage page
         printfn "\tParsed %s." cardInfo.Name
         return { card with Id = cardInfo.Id }
     }
 
-let getSetCardDetails (cookie: string) (client : HttpClient) (setName : string) : CardDetails list Task = 
+let getSetCardDetails (setName : string) : CardDetails list Task = 
     task {
         printfn "Parsing card details..."
-        let! cardInfos = getSetCardInfos cookie client setName
-        let! cardDetails = cardInfos |> Utils.concurrentMap (getCardDetails cookie client)
+        let! cardInfos = getSetCardInfos setName
+        let! cardDetails = cardInfos |> Utils.concurrentMap getCardDetails
         printfn "Card details parsed."
         return cardDetails
     }
 
-let getCardImage (client: HttpClient) (card: CardInfo) : byte[] Task = 
+let getCardImage (card: CardInfo) : byte[] Task = 
     task {
         let url = sprintf "https://mtg.design/i/%s.jpg" card.Id
-        let! response = client.GetAsync url
+        let! response = Config.client.GetAsync url
         let! bytes = response.Content.ReadAsByteArrayAsync()
         return bytes
     }

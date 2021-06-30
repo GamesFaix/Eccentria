@@ -2,7 +2,6 @@
 module MtgDesignWriter
 
 open System
-open System.Net.Http
 open System.Threading.Tasks
 open FSharp.Control.Tasks
 open System.Net
@@ -12,7 +11,7 @@ open Polly
 
 type SaverMode = Create | Edit
 
-let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient) : unit Task =
+let private renderCard (card: CardDetails) (mode: SaverMode) : unit Task =
     task {
         let query = HttpUtility.ParseQueryString("")
         query.Add("card-number", card.Number)
@@ -56,13 +55,13 @@ let private renderCard (card: CardDetails) (mode: SaverMode) (client: HttpClient
                   .Replace("%26rsquo%3b", "%E2%80%99")
                   .Replace("%26rsquo%253", "%E2%80%99")
 
-        let! response = client.GetAsync(url)
+        let! response = Config.client.GetAsync(url)
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "render error" else ()
 
         return ()
     }
 
-let private shareCard (card : CardDetails) (mode: SaverMode) (client: HttpClient): unit Task =
+let private shareCard (card : CardDetails) (mode: SaverMode) : unit Task =
     task {
 
         let query = HttpUtility.ParseQueryString("")
@@ -71,7 +70,7 @@ let private shareCard (card : CardDetails) (mode: SaverMode) (client: HttpClient
         
         let url = sprintf "https://mtg.design/shared?%s" (query.ToString())
 
-        let! response = client.GetAsync(url)
+        let! response = Config.client.GetAsync(url)
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "share error" else ()
 
         return ()
@@ -89,32 +88,32 @@ let private retry (f : unit -> unit Task) : unit Task =
         return ()
     }
 
-let private saveCard (client: HttpClient) (mode: SaverMode) (card: CardDetails) : unit Task =
+let private saveCard (mode: SaverMode) (card: CardDetails) : unit Task =
     task {
         printfn "\tRendering (%s/%s) %s..." card.Number card.Total card.Name
-        let! _ = retry <| (fun () -> renderCard card mode client)
+        let! _ = retry <| (fun () -> renderCard card mode)
         printfn "\tRendered (%s/%s) %s." card.Number card.Total card.Name
         printfn "\tSharing (%s/%s) %s..." card.Number card.Total card.Name
-        let! _ = retry <| (fun () -> shareCard card mode client)
+        let! _ = retry <| (fun () -> shareCard card mode)
         printfn "\tShared (%s/%s) %s." card.Number card.Total card.Name
         ()
     }
 
-let saveCards (client: HttpClient) (mode : SaverMode) (cards : CardDetails list) : unit Task =
+let saveCards (mode : SaverMode) (cards : CardDetails list) : unit Task =
     printfn "Saving cards..."
     // Must go in series or the same image gets rendered for each card
-    cards |> Utils.seriesMap (saveCard client mode) |> Utils.mergeUnit
+    cards |> Utils.seriesMap (saveCard mode) |> Utils.mergeUnit
     
-let deleteCard (client: HttpClient) (card: CardInfo) : unit Task =
+let deleteCard (card: CardInfo) : unit Task =
     task {
         printfn "\tDeleting %s - %s..." card.Set card.Name
         let url = sprintf "https://mtg.design/set/%s/i/%s/delete" card.Set card.Id
-        let! response = client.GetAsync url
+        let! response = Config.client.GetAsync url
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "delete error" else ()        
         printfn "\tDeleted %s - %s." card.Set card.Name
         return ()
     }
 
-let deleteCards (cards : CardInfo list) (client : HttpClient) : unit Task =
+let deleteCards (cards : CardInfo list) : unit Task =
     printfn "Deleting cards..."
-    cards |> Utils.concurrentMap (deleteCard client) |> Utils.mergeUnit
+    cards |> Utils.concurrentMap deleteCard |> Utils.mergeUnit
