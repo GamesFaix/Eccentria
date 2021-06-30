@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Polly" Version="7.2.2" />
     <PackageReference Include="Select.HtmlToPdf.NetCore" Version="21.1.0" />
     <PackageReference Include="SgmlReader" Version="1.8.11" />
     <PackageReference Include="TaskBuilder.fs" Version="2.2.0-alpha" />

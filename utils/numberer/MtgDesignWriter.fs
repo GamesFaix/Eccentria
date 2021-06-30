@@ -8,6 +8,7 @@ open FSharp.Control.Tasks
 open System.Net
 open System.Web
 open Model
+open Polly
 
 type SaverMode = Create | Edit
 
@@ -72,17 +73,29 @@ let private shareCard (card : CardDetails) (mode: SaverMode) (client: HttpClient
 
         let! response = client.GetAsync(url)
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "share error" else ()
-        
+
+        return ()
+    }
+
+let private retry (f : unit -> unit Task) : unit Task =
+    task {
+        let! _ = Policy
+                    .Handle<Exception>()
+                    .WaitAndRetryAsync(3, (fun _ -> 
+                        printfn "Retrying..."
+                        TimeSpan.FromSeconds(1.0))
+                    )
+                    .ExecuteAsync(f)                    
         return ()
     }
 
 let private saveCard (client: HttpClient) (mode: SaverMode) (card: CardDetails) : unit Task =
     task {
         printfn "\tRendering (%s/%s) %s..." card.Number card.Total card.Name
-        let! _ = renderCard card mode client
+        let! _ = retry <| (fun () -> renderCard card mode client)
         printfn "\tRendered (%s/%s) %s." card.Number card.Total card.Name
         printfn "\tSharing (%s/%s) %s..." card.Number card.Total card.Name
-        let! _ = shareCard card mode client
+        let! _ = retry <| (fun () -> shareCard card mode client)
         printfn "\tShared (%s/%s) %s." card.Number card.Total card.Name
         ()
     }

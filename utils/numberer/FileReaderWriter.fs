@@ -5,6 +5,7 @@ open System.Threading.Tasks
 open System.IO
 open System
 open Model
+open System.Text.Json
 
 let private rootDir = 
     let desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
@@ -25,7 +26,7 @@ let private saveFileText (text: string) (path: string): unit Task =
         createDirectoryIfMissing <| Path.GetDirectoryName path
         return! File.WriteAllTextAsync(path, text)
     }
-    
+
 let getSetDir (setName: string) : string =
     sprintf "%s/%s" rootDir setName
 
@@ -41,6 +42,9 @@ let getHtmlLayoutPath (setName: string) : string =
 let getPdfLayoutPath (setName: string) : string =
     sprintf "%s/layout.pdf" (getSetDir setName)    
 
+let getJsonDetailsPath (setName: string) : string =
+    sprintf "%s/details.json" (getSetDir setName)
+
 let saveCardImage (bytes: byte[]) (card: CardInfo) : unit Task =
     saveFileBytes bytes (getCardImagePath card)
 
@@ -49,6 +53,24 @@ let saveHtmlLayout (html: string) (setName: string) : unit Task =
 
 let savePdfLayout (bytes: byte[]) (setName: string) : unit Task =
     saveFileBytes bytes (getPdfLayoutPath setName)
+
+let saveJsonDetails (cards: CardDetails list) (setName: string) : unit Task =
+    let options = JsonSerializerOptions()
+    options.WriteIndented <- true
+    let json = JsonSerializer.Serialize(cards, options)
+    saveFileText json (getJsonDetailsPath setName)
+
+let loadJsonDetails (setName: string) : CardDetails list option Task =
+    task {
+        try 
+            let path = getJsonDetailsPath setName
+            let! json = File.ReadAllTextAsync path
+            let cards = JsonSerializer.Deserialize json
+            return Some cards
+        with
+        | _ -> 
+            return None
+    }
 
 let private deleteFolderIfExists (path: string) : unit =
     if Directory.Exists path 
