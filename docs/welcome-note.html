@@ -14,7 +14,6 @@
                 font-family: Merienda;
             }
             h3 {
-                text-align: center;
                 font-family: Merienda;
             }
             body {
@@ -62,6 +61,25 @@
             }
             .faction-5-background {
                 background-image: linear-gradient(to right, mediumseagreen, beige);
+            }
+            .example {
+                background-color: gainsboro;
+                padding: 12px;
+                font-family: "Goudy, serif"
+            }
+            ul {
+                margin: 0;
+            }
+            .card-example-box {
+                display: flex;
+                justify-content: center;
+            }
+            .card-example-box img {
+                padding: 6px;
+            }
+            figcaption {
+                text-align: center;
+                font-style: italic;
             }
         </style>
     </head>
@@ -125,6 +143,129 @@
 
             <h2>Mechanics</h2>
 
+            <h3>Digress</h3>
+            <p>
+                <b>Digress</b> is a new keyword action, like <i>scry</i> or <i>mill</i>. To digress, players play a subgame of Magic using their libraries as their decks. Each card may specify special rules or starting conditions for the subgame, as well as consequences for winning or losing. For example,
+            </p>
+            <blockquote class="example">
+                Digress with 5 life, 3 cards, and ⸺
+                <ul>
+                    <li>All creatures have haste.</li>
+                    <li>Non-winning players lose 5 life.</li>
+                </ul>
+            </blockquote>
+            <p>
+                That would mean players start the subgame with 5 life and 3-card hands, all creatures have haste during the subgame, and all players except the winner of the subgame lose 5 life when the supergame resumes.
+            </p>
+            <p>
+                If nothing is specified, then standard rules apply <i>(20 life, 7 cards, no special rules)</i>, and there are no consequences when the supergame resumes.
+            </p>
+
+            <p>
+                This mechanic previously appeared on Shahrazad <i>(Arabian Nights, 1993)</i> and Enter the Dungeon <i>(Unhinged, 2004)</i>, but was not a keyword.
+            </p>
+            <div class="card-example-box">
+                <figure>
+                    <img src="https://cdn.cardsrealm.com/images/cartas/en/arn-arabian-nights/shahrazad-10.jpeg?8982" width="200"/>
+                    <figcaption>Arabian Nights</figcaption>
+                </figure>
+                <figure>
+                    <img src="https://mtg.design/i/gbno01.jpg?20210706192928" width="200"/>
+                    <figcaption>Eccentria</figcaption>
+                </figure>
+            </div>
+            <h3>Meta</h3>
+            <p>
+                <b>Meta</b> is a new keyword ability, like <i>trample</i> or <i>hexproof</i>, that can be used to enhance or defend against digress-based strategies.
+            </p>
+            <p>
+                When a subgame starts, any permanents on the battlefield with meta are moved to the battlefield of the subgame.
+            </p>
+            <p>
+                When a subgame ends, any permanents on the battlefield with meta are moved to the battlefield of the supergame.
+            </p>
+            <p>
+                When a permanent with meta moves to another game ⸺
+                <ul>
+                    <li>It stays under control of the same player.</li>
+                    <li>It does not trigger <i>"enters the battlefield"</i> or <i>"leaves the battlefield"</i> abilities.</li>
+                    <li>Any attached auras or equipments without meta are unattached. <i>(Auras are destroyed.)</i></li>
+                    <li>Any counters on the permanent stay.</li>
+                </ul>
+            </p>
+            <p>
+                When a permanent with meta is destroyed, it goes into the graveyard of the current game.
+            </p>
+            <div class="card-example-box">
+                <figure>
+                    <img src="https://mtg.design/i/renj17.jpg?20210707212224" width="200"/>
+                </figure>
+            </div>
+
+            <h3>Toss</h3>
+            <p>
+                <b>Toss</b> is a new keyword action, like <i>scry</i> or <i>mill</i>. To toss a card, flip it onto the battlefield from a height of at least one foot. If you would toss a non-card token, use a substitute card from outside the game.
+            </p>
+            <p>
+                For a toss to be <b>valid</b> ⸺
+                <ul>
+                    <li>The card must start 1 foot above the playing area.</li>
+                    <li>The card must rotate 360 degrees in the air.</li>
+                </ul>
+            </p>
+            <p>
+                If a toss is valid, after the card lands, any permanents the card is in contact with are <b>touched</b>. Each card will specify different actions to take based on the cards touched after a valid toss. If the toss is invalid, no permanents are touched, and typically cards will have no effect.
+            </p>
+            <p>
+                This mechanic previously appeared on Chaos Orb <i>(Alpha, 1993)</i> and Falling Star <i>(Legends, 1994)</i>, but was not a keyword.
+            </p>
+            <div class="card-example-box">
+                <figure>
+                    <img src="https://cdn.cardsrealm.com/images/cartas/en/leb-limited-edition-beta/chaos-orb-236-med.png?2779" width="200"/>
+                    <figcaption>Beta</figcaption>
+                </figure>
+                <figure>
+                    <img src="https://mtg.design/i/gkyw92.jpg?20210706194429" width="200"/>
+                    <figcaption>Eccentria</figcaption>
+                </figure>
+            </div>
+
+            <h3>Fateclash</h3>
+            <p>
+                <b>Fateclash</b> is a new keyword action, like <i>scry</i> or <i>mill</i>. To fateclash, first choose an opponent. You and that player each flip a coin at the same time. If both coins did not come up heads, flip again. Keep flipping until both come up heads at the same time.
+            </p>
+            <p>
+                Each card will specify a different effect triggered by coins coming up heads or tails.
+            </p>
+            <p>
+                This mechanic first appeared on Mana Clash <i>(The Dark, 1994)</i>, but was not a keyword.
+            </p>
+            <div class="card-example-box">
+                <figure>
+                    <img src="https://cdn.cardsrealm.com/images/cartas/en/drk-the-dark/mana-clash-72.jpeg?1584" width="200"/>
+                    <figcaption>The Dark</figcaption>
+                </figure>
+                <figure>
+                    <img src="https://mtg.design/i/tupf91.jpg?20210706194111" width="200"/>
+                    <figcaption>Eccentria</figcaption>
+                </figure>
+            </div>
+
+            <h3>Returning Mechanics</h3>
+
+            <ul>
+                <li>Affinity</li>
+                <li>Dredge</li>
+                <li>Epic</li>
+                <li>Flash</li>
+                <li>Flashback</li>
+                <li>Food tokens</li>
+                <li>Kicker</li>
+                <li>Regeneration</li>
+                <li>Split Second</li>
+                <li>Treasure tokens</li>
+                <li>Vehicles</li>
+            </ul>
         </div>
     </body>
 </html>
