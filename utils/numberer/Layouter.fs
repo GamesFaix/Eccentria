@@ -6,7 +6,7 @@ open System.Threading.Tasks
 open SelectPdf
 
 let private getStyleTag (heightInches: float, widthInches: float) : string =
-    sprintf "<style> img { height: %fin; width: %fin; }</style>" heightInches widthInches
+    sprintf "<style> body { margin: 0; } img { height: %fin; width: %fin; padding-right: 0.15625in; padding-bottom: 0.53125in; }</style>" heightInches widthInches
 
 let private getImageTag (card: CardInfo) : string =
     sprintf "<img src=\"%s\"/>" (FileReaderWriter.getCardFileName card)
@@ -21,7 +21,7 @@ let createHtmlLayout (cards : CardInfo list) : string =
         styleTag
         "</head>"
         "<body>"
-        cardTags |> String.concat "\n"
+        cardTags |> String.concat ""
         "</body>"
         "</html>"
     ] |> String.concat "\n"

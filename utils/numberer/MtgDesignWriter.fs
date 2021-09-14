@@ -8,6 +8,7 @@ open System.Net
 open System.Web
 open Model
 open Polly
+open System.Net.Http
 
 type SaverMode = Create | Edit
 
@@ -55,7 +56,12 @@ let private renderCard (card: CardDetails) (mode: SaverMode) : unit Task =
                   .Replace("%26rsquo%3b", "%E2%80%99")
                   .Replace("%26rsquo%253", "%E2%80%99")
 
-        let! response = Config.client.GetAsync(url)
+        use request = new HttpRequestMessage()
+        request.RequestUri <- Uri(url)
+        request.Method <- HttpMethod.Get
+        request.Headers.Add("Cookie", Config.cookie)
+
+        let! response = Config.client.SendAsync request
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "render error" else ()
 
         return ()
@@ -70,7 +76,12 @@ let private shareCard (card : CardDetails) (mode: SaverMode) : unit Task =
         
         let url = sprintf "https://mtg.design/shared?%s" (query.ToString())
 
-        let! response = Config.client.GetAsync(url)
+        use request = new HttpRequestMessage()
+        request.RequestUri <- Uri(url)
+        request.Method <- HttpMethod.Get
+        request.Headers.Add("Cookie", Config.cookie)
+
+        let! response = Config.client.SendAsync request
         if response.StatusCode >= HttpStatusCode.BadRequest then failwith "share error" else ()
 
         return ()
@@ -91,12 +102,12 @@ let private retry (f : unit -> unit Task) : unit Task =
 let private saveCard (mode: SaverMode) (card: CardDetails) : unit Task =
     task {
         printfn "\tRendering (%s/%s) %s..." card.Number card.Total card.Name
-        let! _ = retry <| (fun () -> renderCard card mode)
+        let! _ = renderCard card mode // retry <| (fun () -> renderCard card mode)
         printfn "\tRendered (%s/%s) %s." card.Number card.Total card.Name
         printfn "\tSharing (%s/%s) %s..." card.Number card.Total card.Name
-        let! _ = retry <| (fun () -> shareCard card mode)
+        let! _ = shareCard card mode //retry <| (fun () -> shareCard card mode)
         printfn "\tShared (%s/%s) %s." card.Number card.Total card.Name
-        ()
+        return ()
     }
 
 let saveCards (mode : SaverMode) (cards : CardDetails list) : unit Task =
