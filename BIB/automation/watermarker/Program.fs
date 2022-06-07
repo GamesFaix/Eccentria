@@ -8,11 +8,15 @@ open Svg
 open System.Drawing.Imaging
 open System.Drawing
 
+let workingDir = "c:/github/jamesfaix/eccentria/bib/watermarks"
+
 let cardNames = [ 
     "Hedron Crab"
     "Whirlpool Warrior"
     "Lightning Bolt"
     "The Underworld Cookbook"
+    "Island Fish Jasconius"
+    "Unicycle"
 ]
 
 let httpClient = new HttpClient()
@@ -31,6 +35,7 @@ let getCard (name: string) = task {
     options.Mode <- SearchOptions.RollupMode.Prints
     options.Sort <- SearchOptions.CardSort.Released
     options.Direction <- SearchOptions.SortDirection.Asc
+    options.IncludeExtras <- true
 
     let! results = scryfall.Cards.Search(query, 1, options)
 
@@ -49,7 +54,7 @@ let getAllSets () = task {
 }
 
 let svgPath (code: string) =
-    $"c:/users/james/desktop/icons/{code}.svg"
+    $"{workingDir}/{code}.svg"
 
 let downloadSetSymbolSvg (code: string) = task {
     let inner () = task { 
@@ -91,39 +96,6 @@ let toScaledBitmap (svg: SvgDocument) =
 
     svg.Draw(rasterWidth, rasterHeight)
 
-// Not necessary with masking
-//let setOpacity (opacity: float) (image: Image) =
-//    let bmp = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb)
-//    use graphics = Graphics.FromImage bmp
-//    let mutable matrix = ColorMatrix()
-//    matrix.Matrix33 <- float32 opacity
-//    use attributes = new ImageAttributes()
-//    attributes.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap)
-//    let rect = Rectangle(0, 0, bmp.Width, bmp.Height)
-//    graphics.DrawImage(image, rect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, attributes)
-//    bmp    
-
-    // Not working
-//let overlayColor (color: Color) (image: Image) =
-//    let tr = float32 color.R / 255.0f
-//    let tg = float32 color.G / 255.0f
-//    let tb = float32 color.B / 255.0f
-//    let matrix = ColorMatrix([| 
-//        [| 0.0f; 0.0f; 0.0f; 0.0f; 0.0f |]
-//        [| 0.0f; 0.0f; 0.0f; 0.0f; 0.0f |]
-//        [| 0.0f; 0.0f; 0.0f; 0.0f; 0.0f |]
-//        [| 0.0f; 0.0f; 0.0f; 0.0f; 0.0f |]
-//        [|   tr;   tg;   tb; 0.0f; 1.0f |]
-//    |])
-//    use attributes = new ImageAttributes()
-//    attributes.SetColorMatrix(matrix)
-
-//    let bmp = new Bitmap(image.Width, image.Height)
-//    use graphics = Graphics.FromImage bmp
-//    let rect = Rectangle(0, 0, bmp.Width, bmp.Height)
-//    graphics.DrawImage(bmp, rect, 0, 0, bmp.Width, bmp.Height, GraphicsUnit.Pixel, attributes)
-//    bmp
-
 type WatermarkColor =
     | White
     | Blue
@@ -162,26 +134,42 @@ let serialize = function
     | Gold -> "gold"
     | LandColorless -> "land-colorless"
 
-let maskPath (color: WatermarkColor) =
-    $"c:/users/james/desktop/icons/background-{serialize color}.png"
+let backgroundPath (color: WatermarkColor) =
+    $"{workingDir}/background-{serialize color}.png"
 
-let pngPath (code: string) (color: WatermarkColor) =
-    $"c:/users/james/desktop/icons/{code}-{serialize color}.png"
+let watermarkPath (code: string) (color: WatermarkColor) =
+    $"{workingDir}/{code}-{serialize color}.png"
+
+let crop (img: Image) (rect: Rectangle) =
+    (new Bitmap(img)).Clone(rect, img.PixelFormat)
+
+let maskImage (source: Bitmap) (mask: Bitmap) =
+    let rect = Rectangle(0, 0, mask.Width, mask.Height)
+    let source = crop source rect
+    let bmp = new Bitmap(mask.Width, mask.Height)
+
+    for y in [0..source.Height-1] do
+        for x in [0..source.Width-1] do
+            let sourcePx = source.GetPixel(x, y)
+            let maskPx = mask.GetPixel(x, y)
+            let newColor = if maskPx.A <> 255uy then Color.Transparent else sourcePx
+            bmp.SetPixel(x, y, newColor)    
+
+    bmp
 
 let createWatermarkPng (card: Card) = task {
     let color = getColor card
 
     let inner () = task {
         let! svg = loadSetSymbolSvg card.Set
-        let bmp = toScaledBitmap svg
-        // let mask = load image from maskPath 
-        // Apply mask to symbol        
-        
-        let path = pngPath card.Set color
-        bmp.Save(path, ImageFormat.Png)
+        let mask = toScaledBitmap svg
+        let background = Bitmap.FromFile(backgroundPath color) :?> Bitmap
+        let watermark = maskImage background mask        
+        let path = watermarkPath card.Set color
+        watermark.Save(path, ImageFormat.Png)
     }
 
-    let path = pngPath card.Set color
+    let path = watermarkPath card.Set color
     if File.Exists path then
         printfn "Found PNG for %s - %s" card.Name path
         return ()
@@ -189,9 +177,6 @@ let createWatermarkPng (card: Card) = task {
         printfn "Rendering PNG for %s - %s" card.Name path
         return! inner ()
 }
-
-// Ensure image mode is RGB
-// Add color mask
 
 [<EntryPoint>]
 let main argv = 
@@ -201,8 +186,7 @@ let main argv =
         for name in cardNames do
             let! c = getCard name
             printfn "%s first printing is %s" name c.Set
-            do! createSetSymbolPng c.Set
-            ()
+            do! createWatermarkPng c
 
         Console.ReadLine() |> ignore
         return 0
