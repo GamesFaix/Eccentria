@@ -21,19 +21,19 @@ let createWatermarkPng (card: Card) = task {
     let inner () = task {
         let! svg = loadSetSymbolSvg card.Set
         let mask = Rendering.toScaledBitmap svg
-        let background = Bitmap.FromFile(FileSystem.backgroundPath color) :?> Bitmap
-        let watermark = Rendering.maskImage background mask        
+        use background = Rendering.loadBackground color
+        use watermark = Rendering.maskImage background mask :> Image
         let path = FileSystem.watermarkPath card.Set color
         watermark.Save(path, ImageFormat.Png)
     }
 
     let path = FileSystem.watermarkPath card.Set color
-    if File.Exists path then
-        printfn "Found PNG for %s - %s" card.Name path
-        return ()
-    else 
-        printfn "Rendering PNG for %s - %s..." card.Name path
-        return! inner ()
+    //if File.Exists path then
+    //    printfn "Found PNG for %s - %s" card.Name path
+    //    return ()
+    //else 
+    //    printfn "Rendering PNG for %s - %s..." card.Name path
+    return! inner ()
 }
 
 let createCheatSheet (cards: Card seq) =

@@ -6,16 +6,17 @@ open ScryfallApi.Client.Models
 open System.Drawing
 open System.Drawing.Imaging
 
-let toScaledBitmap (svg: SvgDocument) = 
-    let maxWatermarkSize = 225
+let maxWidth = 335
+let maxHeight = 335
 
+let toScaledBitmap (svg: SvgDocument) = 
     let dimensions = svg.GetDimensions()
 
     // If height or width is 0, it preserves aspect ratio
     let rasterWidth, rasterHeight =
         if dimensions.Width > dimensions.Height
-        then maxWatermarkSize, 0 
-        else 0, maxWatermarkSize
+        then maxWidth, 0 
+        else 0, maxHeight
 
     svg.Draw(rasterWidth, rasterHeight)
 
@@ -38,17 +39,24 @@ let getColor (c: Card) : WatermarkColor =
 let crop (img: Image) (rect: Rectangle) =
     (new Bitmap(img)).Clone(rect, PixelFormat.Format32bppArgb)
 
+let loadBackground (color: WatermarkColor) =
+    use bmp = Bitmap.FromFile(FileSystem.backgroundPath color)
+    let scaled = new Bitmap(bmp, Size(maxWidth, maxHeight))
+    scaled
+
 let maskImage (source: Bitmap) (mask: Bitmap) =
     let rect = Rectangle(0, 0, mask.Width, mask.Height)
     let source = crop source rect
-    let bmp = new Bitmap(mask.Width, mask.Height, PixelFormat.Format32bppArgb)
+    let bmp = source.Clone(rect, PixelFormat.Format32bppArgb)
 
     for y in [0..source.Height-1] do
         for x in [0..source.Width-1] do
             let sourcePx = source.GetPixel(x, y)
             let maskPx = mask.GetPixel(x, y)
-            let newColor = if maskPx.A <> 255uy then Color.Transparent else sourcePx
-            bmp.SetPixel(x, y, newColor)    
+            if maskPx.A = 255uy then   
+                bmp.SetPixel(x, y, sourcePx)
+            else
+                bmp.SetPixel(x, y, Color.Transparent)
 
     bmp.MakeTransparent(Color.Transparent)
 
