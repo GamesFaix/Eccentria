@@ -6,8 +6,8 @@ open ScryfallApi.Client.Models
 open System.Drawing
 open System.Drawing.Imaging
 
-let maxWidth = 335
-let maxHeight = 335
+let maxWidth = 225
+let maxHeight = 225
 
 let toScaledBitmap (svg: SvgDocument) = 
     let dimensions = svg.GetDimensions()
@@ -46,7 +46,7 @@ let loadBackground (color: WatermarkColor) =
 
 let maskImage (source: Bitmap) (mask: Bitmap) =
     let rect = Rectangle(0, 0, mask.Width, mask.Height)
-    let source = crop source rect
+    use source = crop source rect
     let bmp = source.Clone(rect, PixelFormat.Format32bppArgb)
 
     for y in [0..source.Height-1] do

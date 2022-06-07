@@ -6,6 +6,8 @@ open System
 open FSharp.Control.Tasks
 open ScryfallApi.Client.Models
 open System.IO
+open System.Text.Json
+open System.Threading.Tasks
 
 let private httpClient = new HttpClient()
 httpClient.BaseAddress <- Uri "https://api.scryfall.com"
@@ -15,7 +17,7 @@ config.ScryfallApiBaseAddress <- Uri "https://api.scryfall.com"
 
 let private scryfall = ScryfallApiClient(httpClient, config)
 
-let getCard (name: string) = task {
+let private getCard (name: string) = task {
     printfn "Searching for card %s..." name
 
     // https://scryfall.com/docs/syntax
@@ -37,30 +39,77 @@ let getCard (name: string) = task {
         return result            
 }
 
-let mutable private setsCache = []
 let getAllSets () = task {
-    if setsCache |> List.isEmpty then
-        printfn "Downloading set info..."
+    let path = FileSystem.scryfallSetsDataPath()
+    
+    let options = JsonSerializerOptions()
+    options.WriteIndented <- true
+
+    let inner () = task {
+        printfn "Downloading sets data from Scryfall..."
         let! results = scryfall.Sets.Get()
-        setsCache <- results.Data |> Seq.toList
-    return setsCache
+        let data = results.Data |> Seq.toList 
+        let json = JsonSerializer.Serialize(data, options)
+        do! File.WriteAllTextAsync(path, json)
+        return data
+    }
+
+    if File.Exists path then
+        let! json = File.ReadAllTextAsync path
+        let data = JsonSerializer.Deserialize<Set list>(json)
+        return data
+    else
+        return! inner()
 }
 
-let downloadSetSymbolSvg (code: string) = task {
+let getCards (names: string seq) = task {
+    let path = FileSystem.scryfallCardsDataPath()
+
+    let options = JsonSerializerOptions()
+    options.WriteIndented <- true
+
+    let inner () = task {
+        printfn "Searching for each card on Scryfall..."
+        let! data =
+            names
+            |> Seq.map getCard
+            |> Task.WhenAll
+
+        let json = JsonSerializer.Serialize(data, options)
+        do! File.WriteAllTextAsync(path, json)
+        return data |> Array.toList
+    }
+
+    if File.Exists path then
+        let! json = File.ReadAllTextAsync path
+        let data = JsonSerializer.Deserialize<Card list>(json)
+        return data
+    else
+        return! inner()
+}
+
+let private downloadSetSymbolSvg (set: Set) = task {
     let inner () = task { 
-        let set = setsCache |> Seq.find (fun s -> s.Code = code)    
         use request = new HttpRequestMessage(HttpMethod.Get, set.IconSvgUri)
         let! response = httpClient.SendAsync request
         let! contentStream = response.Content.ReadAsStreamAsync ()
-        use stream = new FileStream(FileSystem.svgPath code, FileMode.Create)
+        use stream = new FileStream(FileSystem.svgPath set.Code, FileMode.Create)
         do! contentStream.CopyToAsync stream
     }
 
-    if File.Exists (FileSystem.svgPath code) 
+    if File.Exists (FileSystem.svgPath set.Code) 
     then 
-        printfn "Found downloaded SVG for %s" code
+        printfn "Found downloaded SVG for %s" set.Code
         return ()
     else 
-        printfn "Downloading SVG for %s..." code
+        printfn "Downloading SVG for %s..." set.Code
         return! inner ()
+}
+
+let downloadSetSymbolSvgs (cards: Card seq) = task {
+    let codes = cards |> Seq.map (fun c -> c.Set) |> Seq.distinct
+    let! sets = getAllSets()
+    let sets = sets |> Seq.filter (fun s -> codes |> Seq.contains s.Code)
+    let! _ = sets |> Seq.map downloadSetSymbolSvg |> Task.WhenAll
+    return ()
 }

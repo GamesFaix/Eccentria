@@ -26,3 +26,12 @@ let backgroundPath (color: WatermarkColor) =
 
 let watermarkPath (code: string) (color: WatermarkColor) =
     $"{workingDir}/{escapeSetCode code}-{serialize color}.png"
+
+let scryfallSetsDataPath () =
+    $"{workingDir}/data/scryfall-sets.json"
+
+let scryfallCardsDataPath () =
+    $"{workingDir}/data/scryfall-cards.json"
+
+let mtgdCardsDataPath () =
+    $"{workingDir}/data/mtgd-cards.json"
