@@ -30,7 +30,7 @@ let createWatermarkPng (card: Card) = task {
     //    printfn "Found PNG for %s - %s" card.Name path
     //    return ()
     //else 
-    //    printfn "Rendering PNG for %s - %s..." card.Name path
+    printfn "Rendering PNG for %s - %s..." card.Name path
     return! inner ()
 }
 
@@ -66,6 +66,7 @@ let main argv =
             
         for c in cards do
             do! createWatermarkPng c
+            do! Async.Sleep (TimeSpan.FromSeconds 1.0) // TODO: Fix this hack to work around memory consumption
 
         Console.WriteLine()
 

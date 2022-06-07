@@ -6,8 +6,8 @@ open ScryfallApi.Client.Models
 open System.Drawing
 open System.Drawing.Imaging
 
-let maxWidth = 225
-let maxHeight = 225
+let maxWidth = 600
+let maxHeight = 300
 
 let toScaledBitmap (svg: SvgDocument) = 
     let dimensions = svg.GetDimensions()
@@ -36,8 +36,8 @@ let getColor (c: Card) : WatermarkColor =
             | _ -> failwith $"Unknown color {color}"
         | _ -> Gold
 
-let crop (img: Image) (rect: Rectangle) =
-    (new Bitmap(img)).Clone(rect, PixelFormat.Format32bppArgb)
+let private crop (img: Bitmap) (rect: Rectangle) =
+    img.Clone(rect, PixelFormat.Format32bppArgb)
 
 let loadBackground (color: WatermarkColor) =
     use bmp = Bitmap.FromFile(FileSystem.backgroundPath color)
