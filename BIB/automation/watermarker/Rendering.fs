@@ -4,6 +4,7 @@ open Svg
 open Model
 open ScryfallApi.Client.Models
 open System.Drawing
+open System.Drawing.Imaging
 
 let toScaledBitmap (svg: SvgDocument) = 
     let maxWatermarkSize = 225
@@ -34,14 +35,13 @@ let getColor (c: Card) : WatermarkColor =
             | _ -> failwith $"Unknown color {color}"
         | _ -> Gold
 
-
 let crop (img: Image) (rect: Rectangle) =
-    (new Bitmap(img)).Clone(rect, img.PixelFormat)
+    (new Bitmap(img)).Clone(rect, PixelFormat.Format32bppArgb)
 
 let maskImage (source: Bitmap) (mask: Bitmap) =
     let rect = Rectangle(0, 0, mask.Width, mask.Height)
     let source = crop source rect
-    let bmp = new Bitmap(mask.Width, mask.Height)
+    let bmp = new Bitmap(mask.Width, mask.Height, PixelFormat.Format32bppArgb)
 
     for y in [0..source.Height-1] do
         for x in [0..source.Width-1] do
@@ -49,5 +49,7 @@ let maskImage (source: Bitmap) (mask: Bitmap) =
             let maskPx = mask.GetPixel(x, y)
             let newColor = if maskPx.A <> 255uy then Color.Transparent else sourcePx
             bmp.SetPixel(x, y, newColor)    
+
+    bmp.MakeTransparent(Color.Transparent)
 
     bmp
