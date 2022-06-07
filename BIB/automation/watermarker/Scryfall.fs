@@ -36,6 +36,7 @@ let getCard (name: string) = task {
 let mutable private setsCache = []
 let getAllSets () = task {
     if setsCache |> List.isEmpty then
+        printfn "Downloading set info..."
         let! results = scryfall.Sets.Get()
         setsCache <- results.Data |> Seq.toList
     return setsCache
@@ -56,6 +57,6 @@ let downloadSetSymbolSvg (code: string) = task {
         printfn "Found downloaded SVG for %s" code
         return ()
     else 
-        printfn "Downloading SVG for %s" code
+        printfn "Downloading SVG for %s..." code
         return! inner ()
 }

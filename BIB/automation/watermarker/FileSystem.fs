@@ -4,8 +4,12 @@ open Model
 
 let private workingDir = "c:/github/jamesfaix/eccentria/bib/watermarks"
 
+let private escapeSetCode = function
+    | "con" -> "conflux" // Can't call a file 'con' on Windows
+    | x -> x
+    
 let svgPath (code: string) =
-    $"{workingDir}/{code}.svg"
+    $"{workingDir}/{escapeSetCode code}.svg"
 
 let private serialize = function
     | White -> "white"
@@ -21,4 +25,4 @@ let backgroundPath (color: WatermarkColor) =
     $"{workingDir}/background-{serialize color}.png"
 
 let watermarkPath (code: string) (color: WatermarkColor) =
-    $"{workingDir}/{code}-{serialize color}.png"
+    $"{workingDir}/{escapeSetCode code}-{serialize color}.png"
