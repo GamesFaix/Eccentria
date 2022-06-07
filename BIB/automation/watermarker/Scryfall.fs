@@ -16,6 +16,8 @@ config.ScryfallApiBaseAddress <- Uri "https://api.scryfall.com"
 let private scryfall = ScryfallApiClient(httpClient, config)
 
 let getCard (name: string) = task {
+    printfn "Searching for card %s..." name
+
     // https://scryfall.com/docs/syntax
     let query = $"!\"{name}\""
     
@@ -30,7 +32,9 @@ let getCard (name: string) = task {
     if results.TotalCards = 0 then
         return failwith $"No card found named \"{name}\"."
     else 
-        return results.Data |> Seq.head
+        let result = results.Data |> Seq.head
+        printfn "%s first printing is %s" name result.Set
+        return result            
 }
 
 let mutable private setsCache = []
