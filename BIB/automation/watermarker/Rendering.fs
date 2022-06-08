@@ -1,36 +1,15 @@
 ﻿module Rendering
 
-open Svg
 open Model
 open ScryfallApi.Client.Models
 open System.Drawing
 open System.Drawing.Imaging
 open FSharp.Control.Tasks
-open System.IO
-open System
 
-let maxHeight = 280
+let maxHeight = 250
 let maxSize = Size(maxHeight * 2, maxHeight)
 
-let private loadSetSymbolSvg (code: string) = task {
-    let! bytes = File.ReadAllBytesAsync (FileSystem.svgPath code)
-    use stream = new MemoryStream(buffer = bytes)
-    let svg = SvgDocument.Open stream
-    return svg
-}
-
-let private getMaxRasterSize (svgDimensions: SizeF) (max: Size): Size =
-    let maxScaleX = float32 max.Width / svgDimensions.Width 
-    let maxScaleY = float32 max.Height / svgDimensions.Height
-    let scale = Math.Min(maxScaleX, maxScaleY)
-    let width = svgDimensions.Width * scale |> int
-    let height = svgDimensions.Height * scale |> int
-    Size(width, height)
-
-let private toScaledBitmap (svg: SvgDocument) = 
-    let dimensions = svg.GetDimensions()
-    let size = getMaxRasterSize dimensions maxSize
-    svg.Draw(size.Width, size.Height)
+let private toFloat (size: Size) = SizeF(float32 size.Width, float32 size.Height)
 
 let getColor (c: Card) : WatermarkColor =
     if c.TypeLine.Contains("Land")
@@ -75,8 +54,8 @@ let createWatermarkPng (card: Card) = task {
     let path = FileSystem.watermarkPath card.Set color
     
     let inner () = task {
-        let! svg = loadSetSymbolSvg card.Set
-        use mask = toScaledBitmap svg
+        let svgPath = FileSystem.svgPath card.Set
+        use mask = SvgHelper.renderAsLargeAsPossibleInContainerWithNoMargin svgPath (maxSize |> toFloat)
         use background = loadBackground color
         use watermark = maskImage background mask :> Image
         watermark.Save(path, ImageFormat.Png)

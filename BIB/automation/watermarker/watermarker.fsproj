@@ -11,6 +11,8 @@
     <Compile Include="Model.fs" />
     <Compile Include="FileSystem.fs" />
     <Compile Include="Scryfall.fs" />
+    <Compile Include="BitmapHelper.fs" />
+    <Compile Include="SvgHelper.fs" />
     <Compile Include="Rendering.fs" />
     <Compile Include="MtgDesign.fs" />
     <Compile Include="Program.fs" />
