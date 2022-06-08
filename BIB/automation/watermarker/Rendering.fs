@@ -9,7 +9,8 @@ open FSharp.Control.Tasks
 open System.IO
 open System
 
-let maxSize = Size(550, 275)
+let maxHeight = 285
+let maxSize = Size(maxHeight * 2, maxHeight)
 
 let private loadSetSymbolSvg (code: string) = task {
     let! bytes = File.ReadAllBytesAsync (FileSystem.svgPath code)
