@@ -1,6 +1,7 @@
 ﻿module BitmapHelper
 
 open System.Drawing
+open System.Drawing.Imaging
 
 type private PixelSpan = int * Color seq
 
@@ -32,3 +33,5 @@ let getBounds (bmp: Bitmap) : Rectangle =
 
     Rectangle(left, top, right-left+1, bottom-top+1)
 
+let crop (bmp: Bitmap) (rect: Rectangle) =
+    bmp.Clone(rect, PixelFormat.Format32bppArgb)

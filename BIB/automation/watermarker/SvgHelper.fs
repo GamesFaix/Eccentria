@@ -34,5 +34,4 @@ let renderAsLargeAsPossibleInContainerWithNoMargin (svgPath: string) (containerS
 
     // Find the scaled bounds of the content, and crop the BMP to remove whitespace
     let scaledBounds = scaleRect bounds scale
-    let croppedBmp = (new Bitmap(resizedBmp)).Clone(scaledBounds, resizedBmp.PixelFormat)
-    croppedBmp
+    BitmapHelper.crop resizedBmp scaledBounds

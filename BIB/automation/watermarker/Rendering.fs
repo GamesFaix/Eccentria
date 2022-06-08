@@ -27,16 +27,13 @@ let getColor (c: Card) : WatermarkColor =
             | _ -> failwith $"Unknown color {color}"
         | _ -> Gold
 
-let private crop (img: Bitmap) (rect: Rectangle) =
-    img.Clone(rect, PixelFormat.Format32bppArgb)
-
 let loadBackground (color: WatermarkColor) =
     use bmp = Bitmap.FromFile(FileSystem.backgroundPath color)
     new Bitmap(bmp, maxSize)
     
 let private maskImage (source: Bitmap) (mask: Bitmap) =
     let rect = Rectangle(0, 0, mask.Width, mask.Height)
-    let source = crop source rect
+    let source = BitmapHelper.crop source rect
 
     for y in [0..source.Height-1] do
         for x in [0..source.Width-1] do
