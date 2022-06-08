@@ -9,7 +9,7 @@ open FSharp.Control.Tasks
 open System.IO
 open System
 
-let maxHeight = 285
+let maxHeight = 280
 let maxSize = Size(maxHeight * 2, maxHeight)
 
 let private loadSetSymbolSvg (code: string) = task {
