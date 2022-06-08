@@ -17,21 +17,34 @@ let private scaleRect (rect: Rectangle) (scale: float32) : Rectangle =
     Rectangle(left, top, width, height)
 
 let renderAsLargeAsPossibleInContainerWithNoMargin (svgPath: string) (containerSize: SizeF) : Bitmap =
-    // Open the SVG and render to BMP
+    // Open the SVG
     let svg = SvgDocument.Open(svgPath)
-    use originalBmp = svg.Draw()
+    let dimensions = svg.GetDimensions()
+    let svgWidth = dimensions.Width
+    let svgHeight = dimensions.Height
+
+    // Render it large to calculate the bounding box
+    let preRenderScale = 
+        match svgWidth with
+        | x when x > 1000f -> 1f
+        | x -> 1000f/x
+
+    let rasterWidth = svgWidth * preRenderScale |> int
+    let rasterHeight = svgHeight * preRenderScale |> int
+    use preRenderBmp = svg.Draw(rasterWidth, rasterHeight)
 
     // Find the bounds of the content in the BMP, and use that to determine the largest scale the SVG
     // can be rendered at, while the content still fits in the container
-    let bounds = BitmapHelper.getBounds originalBmp
-    let scale = getMaxScaleForContainer containerSize (SizeF(float32 bounds.Width, float32 bounds.Height))
+    let preRenderBounds = BitmapHelper.getBounds preRenderBmp
+    let contentSize = SizeF(float32 preRenderBounds.Width, float32 preRenderBounds.Height)
+    let reductionScale = getMaxScaleForContainer containerSize contentSize
+    let scale = reductionScale * preRenderScale 
 
     // Render the SVG to BMP again, at the right scale
-    let dim = svg.GetDimensions()
-    let rasterWidth = scale * dim.Width |> int
-    let rasterHeight = scale * dim.Height |> int
+    let rasterWidth = scale * svgWidth |> int
+    let rasterHeight = scale * svgHeight |> int
     use resizedBmp = svg.Draw(rasterWidth, rasterHeight)
 
     // Find the scaled bounds of the content, and crop the BMP to remove whitespace
-    let scaledBounds = scaleRect bounds scale
-    BitmapHelper.crop resizedBmp scaledBounds
+    let bounds = scaleRect preRenderBounds reductionScale
+    BitmapHelper.crop resizedBmp bounds
