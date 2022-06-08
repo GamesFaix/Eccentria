@@ -30,5 +30,5 @@ let getBounds (bmp: Bitmap) : Rectangle =
     let left = getColumns bmp false |> Seq.tryFind hasVisiblePixel |> Option.map (fun (x, _) -> x) |> Option.defaultValue 0
     let right = getColumns bmp true |> Seq.tryFind hasVisiblePixel |> Option.map (fun (x, _) -> x) |> Option.defaultValue 0
 
-    Rectangle(left, top, right-left, bottom-top)
+    Rectangle(left, top, right-left+1, bottom-top+1)
 

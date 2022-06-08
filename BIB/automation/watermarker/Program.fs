@@ -27,7 +27,7 @@ let main argv =
         let! cards = Scryfall.getCards cardNames
         do! Scryfall.downloadSetSymbolSvgs cards
             
-        for c in cards do
+        for c in cards |> Seq.filter (fun c -> c.Set <> "eld" && c.Set <> "mh1" && c.Set <> "teld") do
             do! Rendering.createWatermarkPng c
 
         Console.WriteLine()
