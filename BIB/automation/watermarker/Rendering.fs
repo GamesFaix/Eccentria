@@ -5,20 +5,31 @@ open Model
 open ScryfallApi.Client.Models
 open System.Drawing
 open System.Drawing.Imaging
+open FSharp.Control.Tasks
+open System.IO
+open System
 
-let maxWidth = 600
-let maxHeight = 300
+let maxSize = Size(600, 300)
 
-let toScaledBitmap (svg: SvgDocument) = 
+let private loadSetSymbolSvg (code: string) = task {
+    let! bytes = File.ReadAllBytesAsync (FileSystem.svgPath code)
+    use stream = new MemoryStream(buffer = bytes)
+    let svg = SvgDocument.Open stream
+    return svg
+}
+
+let private getMaxRasterSize (svgDimensions: SizeF) (max: Size): Size =
+    let maxScaleX = float32 max.Width / svgDimensions.Width 
+    let maxScaleY = float32 max.Height / svgDimensions.Height
+    let scale = Math.Min(maxScaleX, maxScaleY)
+    let width = svgDimensions.Width * scale |> int
+    let height = svgDimensions.Height * scale |> int
+    Size(width, height)
+
+let private toScaledBitmap (svg: SvgDocument) = 
     let dimensions = svg.GetDimensions()
-
-    // If height or width is 0, it preserves aspect ratio
-    let rasterWidth, rasterHeight =
-        if dimensions.Width > dimensions.Height
-        then maxWidth, 0 
-        else 0, maxHeight
-
-    svg.Draw(rasterWidth, rasterHeight)
+    let size = getMaxRasterSize dimensions maxSize
+    svg.Draw(size.Width, size.Height)
 
 let getColor (c: Card) : WatermarkColor =
     if c.TypeLine.Contains("Land")
@@ -41,23 +52,39 @@ let private crop (img: Bitmap) (rect: Rectangle) =
 
 let loadBackground (color: WatermarkColor) =
     use bmp = Bitmap.FromFile(FileSystem.backgroundPath color)
-    let scaled = new Bitmap(bmp, Size(maxWidth, maxHeight))
-    scaled
-
-let maskImage (source: Bitmap) (mask: Bitmap) =
+    new Bitmap(bmp, maxSize)
+    
+let private maskImage (source: Bitmap) (mask: Bitmap) =
     let rect = Rectangle(0, 0, mask.Width, mask.Height)
-    use source = crop source rect
-    let bmp = source.Clone(rect, PixelFormat.Format32bppArgb)
+    let source = crop source rect
 
     for y in [0..source.Height-1] do
         for x in [0..source.Width-1] do
             let sourcePx = source.GetPixel(x, y)
             let maskPx = mask.GetPixel(x, y)
-            if maskPx.A = 255uy then   
-                bmp.SetPixel(x, y, sourcePx)
-            else
-                bmp.SetPixel(x, y, Color.Transparent)
+            let color = if maskPx.A = 255uy then sourcePx else Color.Transparent
+            source.SetPixel(x, y, color)
 
-    bmp.MakeTransparent(Color.Transparent)
+    source.MakeTransparent(Color.Transparent)
 
-    bmp
+    source
+    
+let createWatermarkPng (card: Card) = task {
+    let color = getColor card
+    let path = FileSystem.watermarkPath card.Set color
+    
+    let inner () = task {
+        let! svg = loadSetSymbolSvg card.Set
+        use mask = toScaledBitmap svg
+        use background = loadBackground color
+        use watermark = maskImage background mask :> Image
+        watermark.Save(path, ImageFormat.Png)
+    }
+    
+    //if File.Exists path then
+    //    printfn "Found PNG for %s - %s" card.Name path
+    //    return ()
+    //else 
+    printfn "Rendering PNG for %s - %s..." card.Name path
+    return! inner ()
+}

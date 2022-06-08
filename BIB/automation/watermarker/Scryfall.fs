@@ -34,7 +34,10 @@ let private getCard (name: string) = task {
     if results.TotalCards = 0 then
         return failwith $"No card found named \"{name}\"."
     else 
-        let result = results.Data |> Seq.head
+        let result = 
+            results.Data 
+            |> Seq.filter (fun c -> not <| c.Name.Contains(" // ")) // No art cards
+            |> Seq.head
         printfn "%s first printing is %s" name result.Set
         return result            
 }
