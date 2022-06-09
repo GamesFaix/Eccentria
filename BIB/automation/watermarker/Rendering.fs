@@ -6,8 +6,9 @@ open System.Drawing
 open System.Drawing.Imaging
 open FSharp.Control.Tasks
 
-let maxHeight = 250
-let maxSize = Size(maxHeight * 2, maxHeight)
+let maxWidth = 400
+let maxHeight = 235
+let maxSize = Size(maxWidth, maxHeight)
 
 let private toFloat (size: Size) = SizeF(float32 size.Width, float32 size.Height)
 
