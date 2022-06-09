@@ -6,7 +6,7 @@ open System.Drawing
 open System.Drawing.Imaging
 open FSharp.Control.Tasks
 
-let maxWidth = 400
+let maxWidth = 375
 let maxHeight = 235
 let maxSize = Size(maxWidth, maxHeight)
 
