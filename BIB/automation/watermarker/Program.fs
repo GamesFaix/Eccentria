@@ -12,6 +12,13 @@ let createCheatSheet (cards: Card seq) =
     let rows = cards |> Seq.map createRow
     String.Join("\n", rows)
 
+let adjustSetSymbol (code: string) : string = 
+    match code with
+    | "cmb1" -> "sld"
+    | "lea" -> "plist"
+    | "pw09" -> "m10"
+    | x -> x
+
 [<EntryPoint>]
 let main argv = 
     task {
@@ -25,6 +32,10 @@ let main argv =
             )
 
         let! cards = Scryfall.getCards cardNames
+        cards |> List.iter (fun c -> 
+            if c.Name = "Mind Control" then () else ()
+            c.Set <- adjustSetSymbol c.Set)
+        
         do! Scryfall.downloadSetSymbolSvgs cards
             
         for c in cards do
