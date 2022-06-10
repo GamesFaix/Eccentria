@@ -16,12 +16,13 @@ let getColor (c: Card) : WatermarkColor =
     if c.TypeLine.Contains("Land")
     then 
         match c.ColorIdentity with
-        | [| |] -> LandColorless
         | [| "W" |] -> White
         | [| "U" |] -> Blue
         | [| "B" |] -> Black
         | [| "R" |] -> Red
         | [| "G" |] -> Green
+        | _ when c.OracleText.Contains("any color") -> Gold
+        | [| |] -> LandColorless
         | _ -> Gold
     else
         match c.Colors with

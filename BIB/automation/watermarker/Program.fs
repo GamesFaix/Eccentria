@@ -33,7 +33,6 @@ let main argv =
 
         let! cards = Scryfall.getCards cardNames
         cards |> List.iter (fun c -> 
-            if c.Name = "Mind Control" then () else ()
             c.Set <- adjustSetSymbol c.Set)
         
         do! Scryfall.downloadSetSymbolSvgs cards
