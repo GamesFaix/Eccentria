@@ -14,7 +14,15 @@ let private toFloat (size: Size) = SizeF(float32 size.Width, float32 size.Height
 
 let getColor (c: Card) : WatermarkColor =
     if c.TypeLine.Contains("Land")
-    then LandColorless 
+    then 
+        match c.ColorIdentity with
+        | [| |] -> LandColorless
+        | [| "W" |] -> White
+        | [| "U" |] -> Blue
+        | [| "B" |] -> Black
+        | [| "R" |] -> Red
+        | [| "G" |] -> Green
+        | _ -> Gold
     else
         match c.Colors with
         | [| |] -> Colorless
