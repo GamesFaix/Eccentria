@@ -7,7 +7,15 @@ type WatermarkColor =
     | Red
     | Green
     | Colorless
-    // TODO: Add 2-color gradient masks
+    | WhiteBlue
+    | BlueBlack
+    | BlackRed
+    | RedGreen
+    | GreenWhite
+    | WhiteBlack
+    | BlueRed
+    | BlackGreen
+    | RedWhite
+    | GreenBlue
     | Gold
-    // TODO: Add colored land masks
     | LandColorless

@@ -13,29 +13,38 @@ let maxSize = Size(maxWidth, maxHeight)
 let private toFloat (size: Size) = SizeF(float32 size.Width, float32 size.Height)
 
 let getColor (c: Card) : WatermarkColor =
-    if c.TypeLine.Contains("Land")
-    then 
-        match c.ColorIdentity with
-        | [| "W" |] -> White
-        | [| "U" |] -> Blue
-        | [| "B" |] -> Black
-        | [| "R" |] -> Red
-        | [| "G" |] -> Green
-        | _ when c.OracleText.Contains("any color") -> Gold
-        | [| |] -> LandColorless
-        | _ -> Gold
+    let parse (colors: string seq) =
+        match colors |> Seq.sort |> Seq.toList with
+        | [ "W" ] -> Some White
+        | [ "U" ] -> Some Blue
+        | [ "B" ] -> Some Black
+        | [ "R" ] -> Some Red
+        | [ "G" ] -> Some Green
+        | [ "U"; "W" ] -> Some WhiteBlue
+        | [ "B"; "U" ] -> Some BlueBlack
+        | [ "B"; "R" ] -> Some BlackRed
+        | [ "G"; "R" ] -> Some RedGreen
+        | [ "G"; "W" ] -> Some GreenWhite
+        | [ "B"; "W" ] -> Some WhiteBlack
+        | [ "R"; "U" ] -> Some BlueRed
+        | [ "B"; "G" ] -> Some BlackGreen
+        | [ "R"; "W" ] -> Some RedWhite
+        | [ "G"; "U" ] -> Some GreenBlue
+        | _ -> None
+
+    if c.TypeLine.Contains("Land") then 
+        match parse c.ColorIdentity with
+        | Some x -> x
+        | _ ->
+            if c.OracleText.Contains("any color") then Gold
+            elif c.ColorIdentity = [| |] then LandColorless
+            else Gold
     else
-        match c.Colors with
-        | [| |] -> Colorless
-        | [| color |] -> 
-            match color with
-            | "W" -> White
-            | "U" -> Blue
-            | "B" -> Black
-            | "R" -> Red
-            | "G" -> Green
-            | _ -> failwith $"Unknown color {color}"
-        | _ -> Gold
+        match parse c.Colors with
+        | Some x -> x
+        | _ ->
+            if c.Colors = [| |] then Colorless
+            else Gold
 
 let loadBackground (color: WatermarkColor) =
     use bmp = Bitmap.FromFile(FileSystem.backgroundPath color)
