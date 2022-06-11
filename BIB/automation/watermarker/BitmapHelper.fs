@@ -32,7 +32,7 @@ let private existsAtLeast<'T> (count: int) (filter: 'T -> bool) (source: 'T seq)
 let getBounds (bmp: Bitmap) : Rectangle =
     // Iterate the rows and columns of pixels, and note the first one in each direction that has a non-transparent pixel
 
-    let pixelCount = 1 // Set to 10 for PLIST icon
+    let pixelCount = 20 // Set to 10 for PLIST icon
     let isVisible ((_, pxs): PixelSpan) = pxs |> existsAtLeast pixelCount (fun px -> px.A > 0uy)
 
     let top =  getRows bmp false |> Seq.tryFind isVisible |> Option.map (fun (y, _) -> y) |> Option.defaultValue 0
