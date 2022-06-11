@@ -21,15 +21,24 @@ let private getColumns (bmp: Bitmap) (reverse: bool) : PixelSpan seq =
     let order = if reverse then order |> List.rev else order
     seq { for x in order do getColumn bmp x }
 
+let private existsAtLeast<'T> (count: int) (filter: 'T -> bool) (source: 'T seq) =
+    let mutable matchCount = 0
+    use e = source.GetEnumerator()
+    while matchCount < count && e.MoveNext() do
+        if filter e.Current then
+            matchCount <- matchCount + 1
+    matchCount >= count
+
 let getBounds (bmp: Bitmap) : Rectangle =
     // Iterate the rows and columns of pixels, and note the first one in each direction that has a non-transparent pixel
 
-    let hasVisiblePixel ((_, pxs): PixelSpan) = pxs |> Seq.exists(fun px -> px.A > 0uy)
+    let pixelCount = 1 // Set to 10 for PLIST icon
+    let isVisible ((_, pxs): PixelSpan) = pxs |> existsAtLeast pixelCount (fun px -> px.A > 0uy)
 
-    let top =  getRows bmp false |> Seq.tryFind hasVisiblePixel |> Option.map (fun (y, _) -> y) |> Option.defaultValue 0
-    let bottom = getRows bmp true |> Seq.tryFind hasVisiblePixel |> Option.map (fun (y, _) -> y) |> Option.defaultValue 0
-    let left = getColumns bmp false |> Seq.tryFind hasVisiblePixel |> Option.map (fun (x, _) -> x) |> Option.defaultValue 0
-    let right = getColumns bmp true |> Seq.tryFind hasVisiblePixel |> Option.map (fun (x, _) -> x) |> Option.defaultValue 0
+    let top =  getRows bmp false |> Seq.tryFind isVisible |> Option.map (fun (y, _) -> y) |> Option.defaultValue 0
+    let bottom = getRows bmp true |> Seq.tryFind isVisible |> Option.map (fun (y, _) -> y) |> Option.defaultValue 0
+    let left = getColumns bmp false |> Seq.tryFind isVisible |> Option.map (fun (x, _) -> x) |> Option.defaultValue 0
+    let right = getColumns bmp true |> Seq.tryFind isVisible |> Option.map (fun (x, _) -> x) |> Option.defaultValue 0
 
     Rectangle(left, top, right-left+1, bottom-top+1)
 
