@@ -34,7 +34,6 @@ let main argv =
         let! cards = Scryfall.getCards cardNames
         cards |> List.iter (fun c -> 
             c.Set <- adjustSetSymbol c.Set)
-        let cards = cards |> List.filter (fun c -> c.Set = "plist")
         
         do! Scryfall.downloadSetSymbolSvgs cards
             
