@@ -23,7 +23,7 @@ let adjustSetSymbol (code: string) : string =
 let main argv = 
     task {
         let! _ = Scryfall.getAllSets()
-        let! cardNames = MtgDesign.getCardNames "BIB"
+        let! cardNames = MtgDesign.getCardNames "BB5"
 
         let cardNames = 
             cardNames 

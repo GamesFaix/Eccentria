@@ -26,6 +26,7 @@ let getCardNames (setCode: string) = task {
     }
 
     if File.Exists path then
+        printfn "Reading cached cards from disk."
         let json = File.ReadAllText path
         let data = JsonSerializer.Deserialize<string list>(json)
         return data
