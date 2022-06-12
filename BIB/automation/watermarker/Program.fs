@@ -17,6 +17,7 @@ let adjustSetSymbol (code: string) : string =
     | "cmb1" -> "sld"
     | "lea" -> "plist"
     | "pw09" -> "m10"
+    | "jgp" -> "usg"
     | x -> x
 
 [<EntryPoint>]
