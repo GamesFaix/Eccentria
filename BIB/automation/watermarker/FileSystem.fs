@@ -11,6 +11,9 @@ let private escapeSetCode = function
 let svgPath (code: string) =
     $"{workingDir}/{escapeSetCode code}.svg"
 
+let maskPath (code: string) =
+    $"{workingDir}/{escapeSetCode code}-mask.png"
+
 let serialize = function
     | White -> "white"
     | Blue -> "blue"

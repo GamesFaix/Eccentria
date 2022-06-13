@@ -5,6 +5,7 @@ open ScryfallApi.Client.Models
 open System.Drawing
 open System.Drawing.Imaging
 open FSharp.Control.Tasks
+open System.IO
 
 let maxWidth = 375
 let maxHeight = 235
@@ -68,10 +69,24 @@ let private maskImage (source: Bitmap) (mask: Bitmap) =
 let createWatermarkPng (card: Card) = task {
     let color = getColor card
     let path = FileSystem.watermarkPath card.Set color
+    let maskPath = FileSystem.maskPath card.Set
     
-    let inner () = task {
+    let createMask () = task {
         let svgPath = FileSystem.svgPath card.Set
-        use mask = SvgHelper.renderAsLargeAsPossibleInContainerWithNoMargin svgPath (maxSize |> toFloat)
+        let mask = SvgHelper.renderAsLargeAsPossibleInContainerWithNoMargin svgPath (maxSize |> toFloat)
+        mask.Save maskPath
+        return mask
+    }
+
+    let getOrCreateMask () = task {
+        if File.Exists maskPath then
+            return new Bitmap(maskPath)
+        else
+            return! createMask ()
+    }
+
+    let createWatermark () = task {
+        use! mask = getOrCreateMask ()
         use background = loadBackground color
         use watermark = maskImage background mask :> Image
         watermark.Save(path, ImageFormat.Png)
@@ -82,5 +97,5 @@ let createWatermarkPng (card: Card) = task {
     //    return ()
     //else 
     printfn "Rendering PNG for %s - %s..." card.Name path
-    return! inner ()
+    return! createWatermark ()
 }
