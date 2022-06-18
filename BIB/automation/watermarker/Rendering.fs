@@ -6,6 +6,7 @@ open System.Drawing
 open System.Drawing.Imaging
 open FSharp.Control.Tasks
 open System.IO
+open System.Drawing.Drawing2D
 
 let maxWidth = 375
 let maxHeight = 235
@@ -47,10 +48,47 @@ let getColor (c: Card) : WatermarkColor =
             if c.Colors = [| |] then Colorless
             else Gold
 
-let loadBackground (color: WatermarkColor) =
-    use bmp = Bitmap.FromFile(FileSystem.backgroundPath color)
-    new Bitmap(bmp, maxSize)
-    
+let generateBackGround (color: WatermarkColor) (size: Size) =
+    let white = Color.FromArgb(215, 204, 176)
+    let blue =  Color.FromArgb(179, 198, 213)
+    let black = Color.FromArgb(179, 175, 176)
+    let red =   Color.FromArgb(230, 173, 153)
+    let green = Color.FromArgb(165, 195, 169)
+
+    let solid c =
+        new SolidBrush(c) :> Brush
+
+    let gradient c1 c2 =
+        let middleLeft = Point(0, size.Height/2)
+        let middleRight = Point(size.Width, size.Height/2)
+        new LinearGradientBrush(middleLeft, middleRight, c1, c2) :> Brush
+
+    let getBrush = function
+        | White -> solid white
+        | Blue ->  solid blue
+        | Black -> solid black
+        | Red ->   solid red
+        | Green -> solid green
+        | WhiteBlue ->  gradient white blue
+        | BlueBlack ->  gradient blue black
+        | BlackRed ->   gradient black red
+        | RedGreen ->   gradient red green
+        | GreenWhite -> gradient green white
+        | WhiteBlack -> gradient white black
+        | BlueRed ->    gradient blue red
+        | BlackGreen -> gradient black green
+        | RedWhite ->   gradient red white
+        | GreenBlue ->  gradient green blue
+        | Gold ->          solid <| Color.FromArgb(206, 189, 135)
+        | Colorless ->     solid <| Color.FromArgb(164, 179, 184)
+        | LandColorless -> solid <| Color.FromArgb(164, 159, 156)
+
+    let img = new Bitmap(size.Width, size.Height)
+    use g = Graphics.FromImage img
+    use b = getBrush color
+    g.FillRectangle(b, Rectangle(0, 0, size.Width, size.Height))
+    img
+
 let private maskImage (source: Bitmap) (mask: Bitmap) =
     let rect = Rectangle(0, 0, mask.Width, mask.Height)
     let source = BitmapHelper.crop source rect
@@ -87,7 +125,7 @@ let createWatermarkPng (card: Card) = task {
 
     let createWatermark () = task {
         use! mask = getOrCreateMask ()
-        use background = loadBackground color
+        use background = generateBackGround color mask.Size
         use watermark = maskImage background mask :> Image
         watermark.Save(path, ImageFormat.Png)
     }
