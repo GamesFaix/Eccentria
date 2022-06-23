@@ -52,15 +52,14 @@ let generateBackGround (color: WatermarkColor) (size: Size) =
     let percent b =
         (float b)/ 100.0 * 255.0 |> int
 
-    let alpha = 70 |> percent
-    let white =  Color.FromArgb(alpha, 199, 194, 164)
-    let blue =   Color.FromArgb(alpha, 153, 172, 188)
-    let black =  Color.FromArgb(alpha, 153, 151, 152)
-    let red =    Color.FromArgb(alpha, 199, 135, 102)
-    let green =  Color.FromArgb(alpha, 111, 139, 113)
-    let gold =   Color.FromArgb(alpha, 184, 170, 116)
-    let silver = Color.FromArgb(alpha, 103, 122, 129)
-    let gray =   Color.FromArgb(alpha, 131, 130, 128)
+    let white =  Color.FromArgb(60 |> percent, 182, 174, 139)
+    let blue =   Color.FromArgb(60 |> percent, 132, 152, 175)
+    let black =  Color.FromArgb(60 |> percent, 111, 106, 107)
+    let red =    Color.FromArgb(60 |> percent, 205, 109, 49)
+    let green =  Color.FromArgb(60 |> percent, 63, 123, 81)
+    let gold =   Color.FromArgb(60 |> percent, 173, 145, 35)
+    let silver = Color.FromArgb(60 |> percent, 92, 106, 117)
+    let gray =   Color.FromArgb(60 |> percent, 110, 109, 107)
 
     let solid c =
         new SolidBrush(c) :> Brush
