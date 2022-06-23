@@ -49,11 +49,18 @@ let getColor (c: Card) : WatermarkColor =
             else Gold
 
 let generateBackGround (color: WatermarkColor) (size: Size) =
-    let white = Color.FromArgb(215, 204, 176)
-    let blue =  Color.FromArgb(179, 198, 213)
-    let black = Color.FromArgb(179, 175, 176)
-    let red =   Color.FromArgb(230, 173, 153)
-    let green = Color.FromArgb(165, 195, 169)
+    let percent b =
+        (float b)/ 100.0 * 255.0 |> int
+
+    let alpha = 70 |> percent
+    let white =  Color.FromArgb(alpha, 199, 194, 164)
+    let blue =   Color.FromArgb(alpha, 153, 172, 188)
+    let black =  Color.FromArgb(alpha, 153, 151, 152)
+    let red =    Color.FromArgb(alpha, 199, 135, 102)
+    let green =  Color.FromArgb(alpha, 111, 139, 113)
+    let gold =   Color.FromArgb(alpha, 184, 170, 116)
+    let silver = Color.FromArgb(alpha, 103, 122, 129)
+    let gray =   Color.FromArgb(alpha, 131, 130, 128)
 
     let solid c =
         new SolidBrush(c) :> Brush
@@ -79,9 +86,9 @@ let generateBackGround (color: WatermarkColor) (size: Size) =
         | BlackGreen -> gradient black green
         | RedWhite ->   gradient red white
         | GreenBlue ->  gradient green blue
-        | Gold ->          solid <| Color.FromArgb(206, 189, 135)
-        | Colorless ->     solid <| Color.FromArgb(164, 179, 184)
-        | LandColorless -> solid <| Color.FromArgb(164, 159, 156)
+        | Gold ->          solid gold
+        | Colorless ->     solid silver
+        | LandColorless -> solid gray
 
     let img = new Bitmap(size.Width, size.Height)
     use g = Graphics.FromImage img
