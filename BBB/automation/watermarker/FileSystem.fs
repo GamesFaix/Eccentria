@@ -2,7 +2,7 @@
 
 open Model
 
-let private workingDir = "c:/github/jamesfaix/eccentria/bib/watermarks"
+let private workingDir = "c:/github/jamesfaix/eccentria/bbb/watermarks"
 
 let private escapeSetCode = function
     | "con" -> "conflux" // Can't call a file 'con' on Windows
