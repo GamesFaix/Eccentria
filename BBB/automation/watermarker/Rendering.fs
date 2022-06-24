@@ -52,13 +52,13 @@ let generateBackGround (color: WatermarkColor) (size: Size) =
     let percent b =
         (float b)/ 100.0 * 255.0 |> int
 
-    let white =  Color.FromArgb(60 |> percent, 182, 174, 139)
+    let white =  Color.FromArgb(60 |> percent, 189, 172, 129)
     let blue =   Color.FromArgb(60 |> percent, 132, 152, 175)
-    let black =  Color.FromArgb(60 |> percent, 111, 106, 107)
-    let red =    Color.FromArgb(60 |> percent, 205, 109, 49)
-    let green =  Color.FromArgb(60 |> percent, 63, 123, 81)
-    let gold =   Color.FromArgb(60 |> percent, 173, 145, 35)
-    let silver = Color.FromArgb(60 |> percent, 92, 106, 117)
+    let black =  Color.FromArgb(60 |> percent, 144, 139, 138)
+    let red =    Color.FromArgb(60 |> percent, 220, 151, 112)
+    let green =  Color.FromArgb(60 |> percent, 135, 164, 134)
+    let gold =   Color.FromArgb(60 |> percent, 191, 170, 93)
+    let silver = Color.FromArgb(60 |> percent, 124, 136, 145)
     let gray =   Color.FromArgb(60 |> percent, 110, 109, 107)
 
     let solid c =
