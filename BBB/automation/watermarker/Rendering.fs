@@ -59,6 +59,12 @@ let generateBackGround (w: WatermarkType) (size: Size) =
     let silver = Color.FromArgb(60 |> percent, 124, 136, 145)
     let gray =   Color.FromArgb(60 |> percent, 110, 109, 107)
 
+    let landWhite = Color.FromArgb(60 |> percent, 185, 165, 99)
+    let landBlue = Color.FromArgb(60 |> percent, 84, 138, 175)
+    let landBlack = Color.FromArgb(60 |> percent, 95, 84, 90)
+    let landRed = Color.FromArgb(60 |> percent, 201, 109, 62)
+    let landGreen = Color.FromArgb(60 |> percent, 113, 149, 119)
+
     let solid c =
         new SolidBrush(c) :> Brush
 
@@ -74,12 +80,12 @@ let generateBackGround (w: WatermarkType) (size: Size) =
         | Red -> red
         | Green -> green
 
-    let getLandColor = function // TODO: Fix these
-        | White -> white
-        | Blue -> blue
-        | Black -> black
-        | Red -> red
-        | Green -> green
+    let getLandColor = function
+        | White -> landWhite
+        | Blue -> landBlue
+        | Black -> landBlack
+        | Red -> landRed
+        | Green -> landGreen
 
     let getSpellBrush = function
         | Colorless -> solid silver
