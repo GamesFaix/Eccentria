@@ -6,8 +6,8 @@ let createCheatSheet (cards: Card seq) =
     let createRow (c: Card) =        
         let name = c.Name.PadRight(30)
         let set = c.Set.PadRight(5)
-        let color = Rendering.getColor c |> FileSystem.serialize
-        $"{name} | {set} | {color}"
+        let watermark = Rendering.getWatermarkType c |> FileSystem.serializeWatermark
+        $"{name} | {set} | {watermark}"
 
     let rows = cards |> Seq.map createRow
     String.Join("\n", rows)

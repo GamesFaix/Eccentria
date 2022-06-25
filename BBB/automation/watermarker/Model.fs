@@ -1,21 +1,14 @@
 ﻿module Model
 
-type WatermarkColor =
-    | White
-    | Blue
-    | Black
-    | Red
-    | Green
+type CardColor = White | Blue | Black | Red | Green
+
+type CardType = Spell | Land
+
+type CardColors = 
     | Colorless
-    | WhiteBlue
-    | BlueBlack
-    | BlackRed
-    | RedGreen
-    | GreenWhite
-    | WhiteBlack
-    | BlueRed
-    | BlackGreen
-    | RedWhite
-    | GreenBlue
-    | Gold
-    | LandColorless
+    | One of CardColor
+    | Two of CardColor * CardColor
+    | Multi
+
+type WatermarkType = CardType * CardColors
+   

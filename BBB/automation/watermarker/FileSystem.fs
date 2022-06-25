@@ -14,31 +14,32 @@ let svgPath (code: string) =
 let maskPath (code: string) =
     $"{workingDir}/{escapeSetCode code}-mask.png"
 
-let serialize = function
-    | White -> "white"
-    | Blue -> "blue"
-    | Black -> "black"
-    | Red -> "red"
-    | Green -> "green"
-    | WhiteBlue -> "wu"
-    | BlueBlack -> "ub"
-    | BlackRed -> "br"
-    | RedGreen -> "rg"
-    | GreenWhite -> "gw"
-    | WhiteBlack -> "wb"
-    | BlueRed -> "ur"
-    | BlackGreen -> "bg"
-    | RedWhite -> "rw"
-    | GreenBlue -> "gu"
-    | Colorless -> "colorless"
-    | Gold -> "gold"
-    | LandColorless -> "land-colorless"
+let private serializeColor = function
+    | White -> "w"
+    | Blue -> "u"
+    | Black -> "b"
+    | Red -> "r"
+    | Green -> "g"
 
-let backgroundPath (color: WatermarkColor) =
-    $"{workingDir}/background-{serialize color}.png"
+let private serializeCardType = function
+    | Spell -> ""
+    | Land -> "land-"
 
-let watermarkPath (code: string) (color: WatermarkColor) =
-    $"{workingDir}/{escapeSetCode code}-{serialize color}.png"
+let private serializeColors = function
+    | Colorless -> "c"
+    | One x -> serializeColor x
+    | Two (x, y) -> serializeColor x + serializeColor y
+    | Multi -> "m"
+
+let serializeWatermark (w : WatermarkType) =
+    let cardType, colors = w
+    serializeCardType cardType + serializeColors colors
+    
+let backgroundPath (w: WatermarkType) =
+    $"{workingDir}/background-{serializeWatermark w}.png"
+
+let watermarkPath (code: string) (w: WatermarkType) =
+    $"{workingDir}/{escapeSetCode code}-{serializeWatermark w}.png"
 
 let scryfallSetsDataPath () =
     $"{workingDir}/data/scryfall-sets.json"

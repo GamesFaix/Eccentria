@@ -14,41 +14,39 @@ let maxSize = Size(maxWidth, maxHeight)
 
 let private toFloat (size: Size) = SizeF(float32 size.Width, float32 size.Height)
 
-let getColor (c: Card) : WatermarkColor =
+let getWatermarkType (c: Card) : WatermarkType =
     let parse (colors: string seq) =
         match colors |> Seq.sort |> Seq.toList with
-        | [ "W" ] -> Some White
-        | [ "U" ] -> Some Blue
-        | [ "B" ] -> Some Black
-        | [ "R" ] -> Some Red
-        | [ "G" ] -> Some Green
-        | [ "U"; "W" ] -> Some WhiteBlue
-        | [ "B"; "U" ] -> Some BlueBlack
-        | [ "B"; "R" ] -> Some BlackRed
-        | [ "G"; "R" ] -> Some RedGreen
-        | [ "G"; "W" ] -> Some GreenWhite
-        | [ "B"; "W" ] -> Some WhiteBlack
-        | [ "R"; "U" ] -> Some BlueRed
-        | [ "B"; "G" ] -> Some BlackGreen
-        | [ "R"; "W" ] -> Some RedWhite
-        | [ "G"; "U" ] -> Some GreenBlue
-        | _ -> None
+        | [ ] -> Colorless
+        | [ "W" ] -> One White
+        | [ "U" ] -> One Blue
+        | [ "B" ] -> One Black
+        | [ "R" ] -> One Red
+        | [ "G" ] -> One Green
+        | [ "U"; "W" ] -> Two (White, Blue)
+        | [ "B"; "U" ] -> Two (Blue, Black) 
+        | [ "B"; "R" ] -> Two (Black, Red) 
+        | [ "G"; "R" ] -> Two (Red, Green) 
+        | [ "G"; "W" ] -> Two (Green, White) 
+        | [ "B"; "W" ] -> Two (White, Black) 
+        | [ "R"; "U" ] -> Two (Blue, Red) 
+        | [ "B"; "G" ] -> Two (Black, Green) 
+        | [ "R"; "W" ] -> Two (Red, White) 
+        | [ "G"; "U" ] -> Two (Green, Blue) 
+        | _ -> Multi
 
     if c.TypeLine.Contains("Land") then 
-        match parse c.ColorIdentity with
-        | Some x -> x
-        | _ ->
-            if c.OracleText.Contains("any color") then Gold
-            elif c.ColorIdentity = [| |] then LandColorless
-            else Gold
-    else
-        match parse c.Colors with
-        | Some x -> x
-        | _ ->
-            if c.Colors = [| |] then Colorless
-            else Gold
+        let colors = 
+            match parse c.ColorIdentity with
+            | Colorless ->
+                if c.OracleText.Contains("any color") 
+                then Multi
+                else Colorless
+            | x -> x
+        Land, colors
+    else Spell, parse c.Colors
 
-let generateBackGround (color: WatermarkColor) (size: Size) =
+let generateBackGround (w: WatermarkType) (size: Size) =
     let percent b =
         (float b)/ 100.0 * 255.0 |> int
 
@@ -69,29 +67,39 @@ let generateBackGround (color: WatermarkColor) (size: Size) =
         let middleRight = Point(size.Width, size.Height/2)
         new LinearGradientBrush(middleLeft, middleRight, c1, c2) :> Brush
 
+    let getSpellColor = function
+        | White -> white
+        | Blue -> blue
+        | Black -> black
+        | Red -> red
+        | Green -> green
+
+    let getLandColor = function // TODO: Fix these
+        | White -> white
+        | Blue -> blue
+        | Black -> black
+        | Red -> red
+        | Green -> green
+
+    let getSpellBrush = function
+        | Colorless -> solid silver
+        | One c -> solid (getSpellColor c)
+        | Two (a,b) -> gradient (getSpellColor a) (getSpellColor b)
+        | Multi -> solid gold
+
+    let getLandBrush = function
+        | Colorless -> solid gray
+        | One c -> solid (getLandColor c)
+        | Two (a, b) -> gradient (getLandColor a) (getLandColor b)
+        | Multi -> solid gold // TODO: Fix this
+
     let getBrush = function
-        | White -> solid white
-        | Blue ->  solid blue
-        | Black -> solid black
-        | Red ->   solid red
-        | Green -> solid green
-        | WhiteBlue ->  gradient white blue
-        | BlueBlack ->  gradient blue black
-        | BlackRed ->   gradient black red
-        | RedGreen ->   gradient red green
-        | GreenWhite -> gradient green white
-        | WhiteBlack -> gradient white black
-        | BlueRed ->    gradient blue red
-        | BlackGreen -> gradient black green
-        | RedWhite ->   gradient red white
-        | GreenBlue ->  gradient green blue
-        | Gold ->          solid gold
-        | Colorless ->     solid silver
-        | LandColorless -> solid gray
+        | Spell, c -> getSpellBrush c
+        | Land, c -> getLandBrush c
 
     let img = new Bitmap(size.Width, size.Height)
     use g = Graphics.FromImage img
-    use b = getBrush color
+    use b = getBrush w
     g.FillRectangle(b, Rectangle(0, 0, size.Width, size.Height))
     img
 
@@ -111,7 +119,7 @@ let private maskImage (source: Bitmap) (mask: Bitmap) =
     source
     
 let createWatermarkPng (card: Card) = task {
-    let color = getColor card
+    let color = getWatermarkType card
     let path = FileSystem.watermarkPath card.Set color
     let maskPath = FileSystem.maskPath card.Set
     
